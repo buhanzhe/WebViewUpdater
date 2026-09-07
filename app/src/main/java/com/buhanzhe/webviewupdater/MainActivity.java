@@ -145,7 +145,8 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
 
         View spacer = findViewById(R.id.statusBarSpacer);
         View bottomSpacer = findViewById(R.id.bottomSafeSpacer);
-        int baseBottomSpace = getResources().getDimensionPixelSize(R.dimen.page_padding);
+        int baseBottomSpace = getResources().getDimensionPixelSize(
+                R.dimen.bottom_safe_padding);
         spacer.setOnApplyWindowInsetsListener((view, insets) -> {
             int inset = insets.getSystemWindowInsetTop();
             android.view.ViewGroup.LayoutParams params = view.getLayoutParams();

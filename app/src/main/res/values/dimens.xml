@@ -2,7 +2,7 @@
 <resources>
     <dimen name="page_max_width">760dp</dimen>
     <dimen name="page_padding">20dp</dimen>
+    <dimen name="bottom_safe_padding">40dp</dimen>
     <dimen name="card_padding">20dp</dimen>
     <dimen name="card_spacing">14dp</dimen>
 </resources>
-
