@@ -164,6 +164,7 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
         final int generation = ++loadGeneration;
         selectedPackage = null;
         currentWebViewIsCurrent = false;
+        downloadButton.setText(R.string.download);
         downloadButton.setEnabled(false);
         refreshButton.setEnabled(false);
         progress.setVisibility(View.VISIBLE);
@@ -231,12 +232,18 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
         String sdkRange = selectedPackage.maxSdk == Integer.MAX_VALUE
                 ? selectedPackage.minSdk + "+"
                 : selectedPackage.minSdk + "–" + selectedPackage.maxSdk;
-        matchDetailText.setText(getString(
+        boolean alreadyDownloaded = downloadController.hasExisting(selectedPackage);
+        String detail = getString(
                 R.string.matched_detail,
                 selectedPackage.packageName,
                 selectedPackage.abis.isEmpty() ? "universal" : TextUtils.join(", ", selectedPackage.abis),
                 sdkRange,
-                selectedPackage.fileName()));
+                selectedPackage.fileName());
+        if (alreadyDownloaded) {
+            detail += "\n" + getString(R.string.apk_ready_to_install);
+        }
+        matchDetailText.setText(detail);
+        downloadButton.setText(alreadyDownloaded ? R.string.install : R.string.download);
         downloadButton.setEnabled(true);
         if (isTelevision() || userInitiated) {
             downloadButton.requestFocus();
@@ -478,21 +485,7 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
     public void onReady(ApkDownloadController.DownloadRecord record, boolean existing) {
         progress.setVisibility(View.GONE);
         setActionsEnabled(true);
-        if (existing) {
-            showExistingInstallPrompt(record);
-        } else {
-            attemptDirectInstall(record);
-        }
-    }
-
-    private void showExistingInstallPrompt(ApkDownloadController.DownloadRecord record) {
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.existing_apk_ready_title)
-                .setMessage(getString(R.string.existing_apk_ready_message, record.fileName))
-                .setNegativeButton(R.string.cancel, null)
-                .setPositiveButton(R.string.install, (dialog, which) ->
-                        attemptDirectInstall(record))
-                .show();
+        attemptDirectInstall(record);
     }
 
     @Override

@@ -159,6 +159,14 @@ public final class ApkDownloadController {
         beginDownload();
     }
 
+    public boolean hasExisting(ReleaseConfig.WebViewPackage webViewPackage) {
+        try {
+            return findExisting(webViewPackage) != null;
+        } catch (IOException ignored) {
+            return false;
+        }
+    }
+
     public void close() {
         closed = true;
         persistSegments();

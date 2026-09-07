@@ -44,8 +44,7 @@
     <string name="checksum_failed">下载文件校验失败，已拒绝安装</string>
     <string name="existing_apk_invalid">下载目录中的同名 APK 校验失败</string>
     <string name="install_command_title">手动安装命令</string>
-    <string name="existing_apk_ready_title">安装包已存在</string>
-    <string name="existing_apk_ready_message">下载目录中的 %1$s 已通过 SHA-256 校验。点击“安装”打开系统安装器。</string>
+    <string name="apk_ready_to_install">已检测到下载目录中的安装包，点击“安装”继续</string>
     <string name="install">安装</string>
     <string name="file_manager_install_title">尝试从文件管理器安装</string>
     <string name="file_manager_install_message">系统安装器未完成安装。可以打开文件管理器，在下载目录中点击 %1$s 自行安装。</string>

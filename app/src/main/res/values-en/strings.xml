@@ -44,8 +44,7 @@
     <string name="checksum_failed">Downloaded APK validation failed. Installation was blocked.</string>
     <string name="existing_apk_invalid">The matching APK in Download failed validation</string>
     <string name="install_command_title">Manual install command</string>
-    <string name="existing_apk_ready_title">APK already downloaded</string>
-    <string name="existing_apk_ready_message">%1$s in Downloads passed SHA-256 verification. Tap Install to open the system installer.</string>
+    <string name="apk_ready_to_install">The APK is already in Downloads. Tap Install to continue.</string>
     <string name="install">Install</string>
     <string name="file_manager_install_title">Try installing from Files</string>
     <string name="file_manager_install_message">The system installer did not finish. Open a file manager and tap %1$s in Downloads to install it manually.</string>
