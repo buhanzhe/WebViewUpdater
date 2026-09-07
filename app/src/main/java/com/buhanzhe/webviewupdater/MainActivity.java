@@ -137,18 +137,35 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
                 | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
                 | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         if (Build.VERSION.SDK_INT >= 30 && getWindow().getInsetsController() != null) {
+            getWindow().setDecorFitsSystemWindows(false);
             getWindow().getInsetsController().setSystemBarsAppearance(
                     android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
                     android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
         }
 
         View spacer = findViewById(R.id.statusBarSpacer);
+        View bottomSpacer = findViewById(R.id.bottomSafeSpacer);
+        int baseBottomSpace = getResources().getDimensionPixelSize(R.dimen.page_padding);
         spacer.setOnApplyWindowInsetsListener((view, insets) -> {
             int inset = insets.getSystemWindowInsetTop();
             android.view.ViewGroup.LayoutParams params = view.getLayoutParams();
             if (params.height != inset) {
                 params.height = inset;
                 view.setLayoutParams(params);
+            }
+            int bottomInset = insets.getSystemWindowInsetBottom();
+            if (Build.VERSION.SDK_INT >= 30) {
+                android.graphics.Insets navigation = insets.getInsets(
+                        android.view.WindowInsets.Type.navigationBars());
+                android.graphics.Insets gestures = insets.getInsets(
+                        android.view.WindowInsets.Type.systemGestures());
+                bottomInset = Math.max(navigation.bottom, gestures.bottom);
+            }
+            int bottomHeight = baseBottomSpace + bottomInset;
+            android.view.ViewGroup.LayoutParams bottomParams = bottomSpacer.getLayoutParams();
+            if (bottomParams.height != bottomHeight) {
+                bottomParams.height = bottomHeight;
+                bottomSpacer.setLayoutParams(bottomParams);
             }
             return insets;
         });

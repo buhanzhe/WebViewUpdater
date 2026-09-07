@@ -199,6 +199,11 @@
                 android:text="@string/download_settings"
                 android:textAllCaps="false"
                 android:textColor="@color/primary" />
+
+            <View
+                android:id="@+id/bottomSafeSpacer"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/page_padding" />
     </com.buhanzhe.webviewupdater.MaxWidthLinearLayout>
     </ScrollView>
 
