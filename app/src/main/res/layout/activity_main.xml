@@ -1,13 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/rootScroll"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/windowRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:clipToPadding="false"
-    android:fillViewport="true"
-    android:focusable="false"
-    android:scrollbarStyle="insideOverlay"
-    android:scrollbars="vertical">
+    android:background="@color/surface"
+    android:orientation="vertical">
+
+    <View
+        android:id="@+id/statusBarSpacer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/surface" />
+
+    <ScrollView
+        android:id="@+id/rootScroll"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@color/background"
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:focusable="false"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical">
 
     <com.buhanzhe.webviewupdater.MaxWidthLinearLayout
         android:layout_width="match_parent"
@@ -202,4 +217,6 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
     </com.buhanzhe.webviewupdater.MaxWidthLinearLayout>
-</ScrollView>
+    </ScrollView>
+
+</LinearLayout>

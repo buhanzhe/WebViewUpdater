@@ -13,6 +13,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -75,6 +76,7 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
                 ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                 : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_main);
+        configureSystemBars();
 
         bindViews();
         sourcePreferences = new DownloadSourcePreferences(this);
@@ -124,6 +126,36 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
         downloadButton = findViewById(R.id.downloadButton);
         refreshButton = findViewById(R.id.refreshButton);
         settingsButton = findViewById(R.id.settingsButton);
+    }
+
+    private void configureSystemBars() {
+        if (Build.VERSION.SDK_INT < 23) {
+            getWindow().setStatusBarColor(getColorCompat(R.color.primary_dark));
+            return;
+        }
+
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        View decor = getWindow().getDecorView();
+        decor.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        if (Build.VERSION.SDK_INT >= 30 && getWindow().getInsetsController() != null) {
+            getWindow().getInsetsController().setSystemBarsAppearance(
+                    android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                    android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+        }
+
+        View spacer = findViewById(R.id.statusBarSpacer);
+        spacer.setOnApplyWindowInsetsListener((view, insets) -> {
+            int inset = insets.getSystemWindowInsetTop();
+            android.view.ViewGroup.LayoutParams params = view.getLayoutParams();
+            if (params.height != inset) {
+                params.height = inset;
+                view.setLayoutParams(params);
+            }
+            return insets;
+        });
+        spacer.requestApplyInsets();
     }
 
     private void wireActions() {
