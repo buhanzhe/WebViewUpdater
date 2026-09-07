@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "assetBaseUrl": "https://github.com/buhanzhe/WebViewUpdater/releases/latest/download/",
+  "packages": [
+    {
+      "id": "google-webview-version-arm64",
+      "packageName": "com.google.android.webview",
+      "versionName": "REPLACE_WITH_VERSION",
+      "versionCode": 0,
+      "channel": "stable",
+      "minSdk": 21,
+      "maxSdk": 35,
+      "abis": [
+        "arm64-v8a"
+      ],
+      "multiArch": false,
+      "asset": "REPLACE_WITH_FILENAME.apk",
+      "sha256": "",
+      "enabled": false
+    },
+    {
+      "id": "aosp-webview-version-multiarch",
+      "packageName": "com.android.webview",
+      "versionName": "REPLACE_WITH_VERSION",
+      "versionCode": 0,
+      "channel": "stable",
+      "minSdk": 21,
+      "maxSdk": 35,
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a"
+      ],
+      "multiArch": true,
+      "asset": "REPLACE_WITH_FILENAME.apk",
+      "sha256": "",
+      "enabled": false
+    }
+  ]
+}
+

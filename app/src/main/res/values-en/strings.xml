@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WebView Updater</string>
+    <string name="app_title">WebView Updater</string>
+    <string name="app_subtitle">Detect this device and select a matching WebView package from project Releases</string>
+    <string name="device_title">This device</string>
+    <string name="android_version">Android</string>
+    <string name="device_abis">Device ABIs</string>
+    <string name="process_abi">App process</string>
+    <string name="webview_title">System WebView</string>
+    <string name="webview_provider">Provider</string>
+    <string name="webview_version">Version</string>
+    <string name="webview_arch">Package ABIs</string>
+    <string name="webview_multi_arch">Multi-arch package</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="unknown">Unknown</string>
+    <string name="match_title">Recommended build</string>
+    <string name="checking">Reading Release configuration…</string>
+    <string name="download">Download APK</string>
+    <string name="check_again">Check again</string>
+    <string name="download_settings">Download source</string>
+    <string name="proxy_status">Source: %1$s</string>
+    <string name="proxy_auto">Automatic (gh-proxy.com → direct GitHub)</string>
+    <string name="proxy_one">gh-proxy.com</string>
+    <string name="proxy_direct">Direct GitHub</string>
+    <string name="proxy_custom">Custom proxy</string>
+    <string name="custom_proxy_hint">For example https://example.com/</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="config_error">Could not read configuration: %1$s</string>
+    <string name="no_match">No WebView package in the configuration matches this device</string>
+    <string name="config_source">Configuration source: %1$s</string>
+    <string name="matched_version">%1$s (%2$s)</string>
+    <string name="matched_detail">Package: %1$s\nABIs: %2$s\nAndroid: %3$s\nFile: %4$s</string>
+    <string name="download_started">Downloading %1$s</string>
+    <string name="download_progress">Downloading: %1$d%%</string>
+    <string name="download_failed">Download failed (DownloadManager reason: %1$d)</string>
+    <string name="verifying">Download complete. Verifying file…</string>
+    <string name="checksum_failed">Downloaded APK validation failed. Installation was blocked.</string>
+    <string name="install_permission">Allow installs from this app, then return to continue</string>
+    <string name="installer_missing">No system APK installer is available</string>
+    <string name="invalid_custom_proxy">Enter a proxy URL beginning with http:// or https://</string>
+    <string name="provider_missing">No usable WebView provider was detected</string>
+    <string name="privacy_note">Only the GitHub Release configuration and selected APK are requested. Downloads stay in this app’s download directory.</string>
+</resources>

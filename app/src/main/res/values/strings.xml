@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WebView 更新器</string>
+    <string name="app_title">WebView 更新器</string>
+    <string name="app_subtitle">检测设备，并从项目 Release 选择匹配的 WebView 安装包</string>
+    <string name="device_title">当前设备</string>
+    <string name="android_version">Android</string>
+    <string name="device_abis">设备架构</string>
+    <string name="process_abi">当前进程</string>
+    <string name="webview_title">系统 WebView</string>
+    <string name="webview_provider">实现包</string>
+    <string name="webview_version">版本</string>
+    <string name="webview_arch">包架构</string>
+    <string name="webview_multi_arch">多架构包</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+    <string name="unknown">未知</string>
+    <string name="match_title">推荐版本</string>
+    <string name="checking">正在读取 Release 配置…</string>
+    <string name="download">下载 APK</string>
+    <string name="check_again">重新检查</string>
+    <string name="download_settings">下载源设置</string>
+    <string name="proxy_status">下载源：%1$s</string>
+    <string name="proxy_auto">自动（gh-proxy.com → GitHub 直连）</string>
+    <string name="proxy_one">gh-proxy.com</string>
+    <string name="proxy_direct">GitHub 直连</string>
+    <string name="proxy_custom">自定义加速站</string>
+    <string name="custom_proxy_hint">例如 https://example.com/</string>
+    <string name="save">保存</string>
+    <string name="cancel">取消</string>
+    <string name="config_error">读取配置失败：%1$s</string>
+    <string name="no_match">配置中没有适合此设备的 WebView 包</string>
+    <string name="config_source">配置来源：%1$s</string>
+    <string name="matched_version">%1$s（%2$s）</string>
+    <string name="matched_detail">包名：%1$s\n架构：%2$s\n适用 Android：%3$s\n文件：%4$s</string>
+    <string name="download_started">已开始下载 %1$s</string>
+    <string name="download_progress">正在下载：%1$d%%</string>
+    <string name="download_failed">下载失败（DownloadManager 状态码：%1$d）</string>
+    <string name="verifying">下载完成，正在校验文件…</string>
+    <string name="checksum_failed">下载文件校验失败，已拒绝安装</string>
+    <string name="install_permission">请允许“安装未知应用”，返回后将继续安装</string>
+    <string name="installer_missing">找不到能够安装 APK 的系统应用</string>
+    <string name="invalid_custom_proxy">请输入以 http:// 或 https:// 开头的加速站地址</string>
+    <string name="provider_missing">未检测到可用的 WebView 实现</string>
+    <string name="privacy_note">仅访问 GitHub Release 配置与所选 APK；文件保存到本应用的下载目录。</string>
+</resources>
