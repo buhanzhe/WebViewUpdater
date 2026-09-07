@@ -69,17 +69,30 @@ public final class ReleaseConfig {
         }
 
         String newestConfiguredVersion = "";
+        long newestConfiguredVersionCode = 0L;
         for (WebViewPackage candidate : packages) {
             if (!candidate.enabled || !candidate.packageName.equals(currentPackage)) {
                 continue;
             }
-            if (newestConfiguredVersion.isEmpty()
-                    || compareVersionNames(candidate.versionName, newestConfiguredVersion) > 0) {
+            int versionComparison = newestConfiguredVersion.isEmpty()
+                    ? 1
+                    : compareVersionNames(candidate.versionName, newestConfiguredVersion);
+            if (versionComparison > 0) {
                 newestConfiguredVersion = candidate.versionName;
+                newestConfiguredVersionCode = candidate.versionCode;
+            } else if (versionComparison == 0) {
+                newestConfiguredVersionCode = Math.max(
+                        newestConfiguredVersionCode,
+                        candidate.versionCode);
             }
         }
-        return !newestConfiguredVersion.isEmpty()
-                && compareVersionNames(currentVersion, newestConfiguredVersion) > 0;
+        if (newestConfiguredVersion.isEmpty()) {
+            return false;
+        }
+        int versionComparison = compareVersionNames(currentVersion, newestConfiguredVersion);
+        return versionComparison > 0
+                || (versionComparison == 0
+                && deviceInfo.webViewVersionCode() > newestConfiguredVersionCode);
     }
 
     private static int compareVersionNames(String left, String right) {
