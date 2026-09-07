@@ -31,6 +31,7 @@ import android.widget.Toast;
 
 public final class MainActivity extends Activity implements ApkDownloadController.Listener {
     private static final int STORAGE_PERMISSION_REQUEST = 41;
+    private static final int FILE_PICKER_REQUEST = 42;
     private static final String INSTALL_STATE = "install_state";
     private static final String KEY_PENDING_PACKAGE = "package";
     private static final String KEY_PENDING_VERSION_NAME = "version_name";
@@ -40,6 +41,8 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
     private static final String KEY_PENDING_PHASE = "phase";
     private static final String PHASE_PERMISSION = "permission";
     private static final String PHASE_INSTALLER = "installer";
+    private static final String PHASE_FILE_MANAGER = "file_manager";
+    private static final String PHASE_FILE_INSTALLER = "file_installer";
 
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private TextView deviceInfoText;
@@ -476,10 +479,20 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
         progress.setVisibility(View.GONE);
         setActionsEnabled(true);
         if (existing) {
-            showInstallCommand(record, R.string.apk_already_downloaded);
+            showExistingInstallPrompt(record);
         } else {
             attemptDirectInstall(record);
         }
+    }
+
+    private void showExistingInstallPrompt(ApkDownloadController.DownloadRecord record) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.existing_apk_ready_title)
+                .setMessage(getString(R.string.existing_apk_ready_message, record.fileName))
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.install, (dialog, which) ->
+                        attemptDirectInstall(record))
+                .show();
     }
 
     @Override
@@ -502,23 +515,28 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
     }
 
     private void attemptDirectInstall(ApkDownloadController.DownloadRecord record) {
+        savePendingInstall(record);
         if (record.contentUri == null) {
-            showInstallCommand(record, R.string.direct_install_unavailable);
+            showFileManagerPrompt(record);
             return;
         }
-        getSharedPreferences(INSTALL_STATE, MODE_PRIVATE).edit()
-                .putString(KEY_PENDING_PACKAGE, record.packageName)
-                .putString(KEY_PENDING_VERSION_NAME, record.versionName)
-                .putLong(KEY_PENDING_VERSION_CODE, record.versionCode)
-                .putString(KEY_PENDING_PATH, record.file.getAbsolutePath())
-                .putString(KEY_PENDING_URI, record.contentUri.toString())
-                .apply();
         if (Build.VERSION.SDK_INT >= 26
                 && !getPackageManager().canRequestPackageInstalls()) {
             requestInstallPermission(record);
             return;
         }
-        startPackageInstaller(record);
+        startPackageInstaller(record, PHASE_INSTALLER);
+    }
+
+    private void savePendingInstall(ApkDownloadController.DownloadRecord record) {
+        getSharedPreferences(INSTALL_STATE, MODE_PRIVATE).edit()
+                .putString(KEY_PENDING_PACKAGE, record.packageName)
+                .putString(KEY_PENDING_VERSION_NAME, record.versionName)
+                .putLong(KEY_PENDING_VERSION_CODE, record.versionCode)
+                .putString(KEY_PENDING_PATH, record.file.getAbsolutePath())
+                .putString(KEY_PENDING_URI,
+                        record.contentUri == null ? "" : record.contentUri.toString())
+                .apply();
     }
 
     private void requestInstallPermission(ApkDownloadController.DownloadRecord record) {
@@ -530,14 +548,14 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
         try {
             startActivity(settings);
         } catch (ActivityNotFoundException | SecurityException error) {
-            clearPendingInstall();
-            showInstallCommand(record, R.string.direct_install_unavailable);
+            showFileManagerPrompt(record);
         }
     }
 
-    private void startPackageInstaller(ApkDownloadController.DownloadRecord record) {
+    private void startPackageInstaller(ApkDownloadController.DownloadRecord record,
+                                       String phase) {
         getSharedPreferences(INSTALL_STATE, MODE_PRIVATE).edit()
-                .putString(KEY_PENDING_PHASE, PHASE_INSTALLER)
+                .putString(KEY_PENDING_PHASE, phase)
                 .apply();
         Intent install = new Intent(Intent.ACTION_VIEW)
                 .setDataAndType(record.contentUri, "application/vnd.android.package-archive")
@@ -545,9 +563,118 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
         try {
             startActivity(install);
         } catch (ActivityNotFoundException | SecurityException error) {
-            clearPendingInstall();
-            showInstallCommand(record, R.string.direct_install_unavailable);
+            if (PHASE_FILE_INSTALLER.equals(phase)) {
+                clearPendingInstall();
+                showInstallCommand(record, R.string.direct_install_unavailable);
+            } else {
+                showFileManagerPrompt(record);
+            }
         }
+    }
+
+    private void showFileManagerPrompt(ApkDownloadController.DownloadRecord record) {
+        final AlertDialog dialog = new AlertDialog.Builder(this)
+                .setTitle(R.string.file_manager_install_title)
+                .setMessage(getString(R.string.file_manager_install_message, record.fileName))
+                .setNegativeButton(R.string.cancel, (ignored, which) -> clearPendingInstall())
+                .setPositiveButton(R.string.open_file_manager, (ignored, which) ->
+                        openFileManager(record))
+                .create();
+        dialog.setOnCancelListener(ignored -> clearPendingInstall());
+        dialog.show();
+    }
+
+    private void openFileManager(ApkDownloadController.DownloadRecord record) {
+        savePendingInstall(record);
+        getSharedPreferences(INSTALL_STATE, MODE_PRIVATE).edit()
+                .putString(KEY_PENDING_PHASE, PHASE_FILE_MANAGER)
+                .apply();
+
+        Intent directory = new Intent(Intent.ACTION_VIEW)
+                .setDataAndType(
+                        Uri.parse("content://com.android.externalstorage.documents/"
+                                + "document/primary%3ADownload"),
+                        "vnd.android.document/directory")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            String[] documentProviders = {
+                    "com.google.android.documentsui",
+                    "com.android.documentsui"
+            };
+            for (String packageName : documentProviders) {
+                directory.setPackage(packageName);
+                if (directory.resolveActivity(getPackageManager()) != null) {
+                    showFileManagerHint(record);
+                    startActivity(directory);
+                    return;
+                }
+            }
+
+            String[] fileManagers = {
+                    "com.android.fileexplorer",
+                    "com.google.android.apps.nbu.files",
+                    "com.sec.android.app.myfiles",
+                    "com.huawei.hidisk",
+                    "com.asus.filemanager"
+            };
+            for (String packageName : fileManagers) {
+                Intent launcher = getPackageManager().getLaunchIntentForPackage(packageName);
+                if (launcher != null) {
+                    showFileManagerHint(record);
+                    startActivity(launcher);
+                    return;
+                }
+            }
+
+            Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                    .addCategory(Intent.CATEGORY_OPENABLE)
+                    .setType("application/vnd.android.package-archive");
+            if (picker.resolveActivity(getPackageManager()) != null) {
+                showFileManagerHint(record);
+                startActivityForResult(picker, FILE_PICKER_REQUEST);
+                return;
+            }
+        } catch (ActivityNotFoundException | SecurityException error) {
+            // The ADB command below is the final fallback.
+        }
+        clearPendingInstall();
+        showInstallCommand(record, R.string.file_manager_unavailable);
+    }
+
+    private void showFileManagerHint(ApkDownloadController.DownloadRecord record) {
+        Toast.makeText(this,
+                getString(R.string.file_manager_install_hint, record.fileName),
+                Toast.LENGTH_LONG).show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != FILE_PICKER_REQUEST) {
+            return;
+        }
+        ApkDownloadController.DownloadRecord record = recordFromPending();
+        Uri selected = data == null ? null : data.getData();
+        if (resultCode != RESULT_OK || selected == null || record == null) {
+            clearPendingInstall();
+            if (record != null) {
+                showInstallCommand(record, R.string.file_manager_not_completed);
+            }
+            return;
+        }
+        ApkDownloadController.DownloadRecord selectedRecord =
+                new ApkDownloadController.DownloadRecord(
+                        record.file,
+                        record.fileName,
+                        record.sha256,
+                        record.packageName,
+                        record.versionName,
+                        record.versionCode,
+                        selected);
+        getSharedPreferences(INSTALL_STATE, MODE_PRIVATE).edit()
+                .putString(KEY_PENDING_URI, selected.toString())
+                .apply();
+        startPackageInstaller(selectedRecord, PHASE_FILE_INSTALLER);
     }
 
     private void checkPendingInstallResult() {
@@ -559,27 +686,20 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
         }
         String expectedVersionName = pending.getString(KEY_PENDING_VERSION_NAME, "");
         long expectedVersionCode = pending.getLong(KEY_PENDING_VERSION_CODE, 0L);
-        String path = pending.getString(KEY_PENDING_PATH, "");
-        String uri = pending.getString(KEY_PENDING_URI, "");
         String phase = pending.getString(KEY_PENDING_PHASE, "");
 
-        ApkDownloadController.DownloadRecord record =
-                new ApkDownloadController.DownloadRecord(
-                        new java.io.File(path == null ? "" : path),
-                        path == null ? "" : new java.io.File(path).getName(),
-                        "",
-                        packageName,
-                        expectedVersionName,
-                        expectedVersionCode,
-                        TextUtils.isEmpty(uri) ? null : Uri.parse(uri));
+        ApkDownloadController.DownloadRecord record = recordFromPending();
+        if (record == null) {
+            clearPendingInstall();
+            return;
+        }
 
         if (PHASE_PERMISSION.equals(phase)) {
             if (Build.VERSION.SDK_INT >= 26
                     && getPackageManager().canRequestPackageInstalls()) {
-                startPackageInstaller(record);
+                startPackageInstaller(record, PHASE_INSTALLER);
             } else {
-                clearPendingInstall();
-                showInstallCommand(record, R.string.direct_install_not_completed);
+                showFileManagerPrompt(record);
             }
             return;
         }
@@ -611,7 +731,30 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
             return;
         }
 
-        showInstallCommand(record, R.string.direct_install_not_completed);
+        if (PHASE_FILE_MANAGER.equals(phase) || PHASE_FILE_INSTALLER.equals(phase)) {
+            showInstallCommand(record, R.string.file_manager_not_completed);
+        } else {
+            showFileManagerPrompt(record);
+        }
+    }
+
+    private ApkDownloadController.DownloadRecord recordFromPending() {
+        android.content.SharedPreferences pending = getSharedPreferences(
+                INSTALL_STATE, MODE_PRIVATE);
+        String packageName = pending.getString(KEY_PENDING_PACKAGE, "");
+        if (TextUtils.isEmpty(packageName)) {
+            return null;
+        }
+        String path = pending.getString(KEY_PENDING_PATH, "");
+        String uri = pending.getString(KEY_PENDING_URI, "");
+        return new ApkDownloadController.DownloadRecord(
+                new java.io.File(path == null ? "" : path),
+                path == null ? "" : new java.io.File(path).getName(),
+                "",
+                packageName,
+                pending.getString(KEY_PENDING_VERSION_NAME, ""),
+                pending.getLong(KEY_PENDING_VERSION_CODE, 0L),
+                TextUtils.isEmpty(uri) ? null : Uri.parse(uri));
     }
 
     private void clearPendingInstall() {

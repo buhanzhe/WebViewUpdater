@@ -21,6 +21,18 @@
         <package android:name="com.google.android.webview.beta" />
         <package android:name="com.google.android.webview.dev" />
         <package android:name="com.google.android.webview.canary" />
+        <package android:name="com.google.android.documentsui" />
+        <package android:name="com.android.documentsui" />
+        <package android:name="com.android.fileexplorer" />
+        <package android:name="com.google.android.apps.nbu.files" />
+        <package android:name="com.sec.android.app.myfiles" />
+        <package android:name="com.huawei.hidisk" />
+        <package android:name="com.asus.filemanager" />
+        <intent>
+            <action android:name="android.intent.action.OPEN_DOCUMENT" />
+            <category android:name="android.intent.category.OPENABLE" />
+            <data android:mimeType="application/vnd.android.package-archive" />
+        </intent>
     </queries>
 
     <application

@@ -17,7 +17,7 @@
     <string name="unknown">Unknown</string>
     <string name="match_title">Recommended build</string>
     <string name="checking">Reading Release configuration…</string>
-    <string name="download">Download to system folder</string>
+    <string name="download">Save to Downloads</string>
     <string name="check_again">Check again</string>
     <string name="download_settings">Download source</string>
     <string name="proxy_status">Source: %1$s</string>
@@ -34,19 +34,26 @@
     <string name="webview_already_latest">Congratulations! Your WebView is already up to date.</string>
     <string name="config_source">Configuration source: %1$s</string>
     <string name="matched_version">%1$s (%2$s)</string>
-    <string name="matched_detail">Package: %1$s\nABIs: %2$s\nAndroid: %3$s\nFile: %4$s\nSaved in: system Download folder</string>
-    <string name="storage_permission_required">Storage permission is required to write to the system Download folder</string>
+    <string name="matched_detail">Package: %1$s\nABIs: %2$s\nAndroid: %3$s\nFile: %4$s\nSaved in: Downloads</string>
+    <string name="storage_permission_required">Storage permission is required to write to Downloads</string>
     <string name="download_started">Starting segmented download: %1$s</string>
     <string name="download_progress">Downloading with four connections: %1$d%%</string>
     <string name="download_failed">Download failed (status: %1$d)</string>
     <string name="checking_existing_apk">The APK already exists. Verifying it…</string>
-    <string name="verifying">Download complete. Verifying and publishing to the system folder…</string>
+    <string name="verifying">Download complete. Verifying and saving to Downloads…</string>
     <string name="checksum_failed">Downloaded APK validation failed. Installation was blocked.</string>
     <string name="existing_apk_invalid">The matching APK in Download failed validation</string>
     <string name="install_command_title">Manual install command</string>
-    <string name="apk_already_downloaded">A verified APK is already in Download. Connect a computer and run:</string>
+    <string name="existing_apk_ready_title">APK already downloaded</string>
+    <string name="existing_apk_ready_message">%1$s in Downloads passed SHA-256 verification. Tap Install to open the system installer.</string>
+    <string name="install">Install</string>
+    <string name="file_manager_install_title">Try installing from Files</string>
+    <string name="file_manager_install_message">The system installer did not finish. Open a file manager and tap %1$s in Downloads to install it manually.</string>
+    <string name="file_manager_install_hint">Tap %1$s in Downloads to install</string>
+    <string name="open_file_manager">Open file manager</string>
+    <string name="file_manager_unavailable">A file manager could not be opened. Connect a computer and run:</string>
+    <string name="file_manager_not_completed">Installation from the file manager did not succeed. Connect a computer and run:</string>
     <string name="direct_install_unavailable">The system blocked the package installer. Connect a computer and run:</string>
-    <string name="direct_install_not_completed">Installation was not detected. You can connect a computer and run:</string>
     <string name="copy_command">Copy command</string>
     <string name="install_command_copied">Install command copied</string>
     <string name="install_success_title">Installation successful</string>
@@ -54,5 +61,5 @@
     <string name="ok">OK</string>
     <string name="invalid_custom_proxy">Enter a proxy URL beginning with http:// or https://</string>
     <string name="provider_missing">No usable WebView provider was detected</string>
-    <string name="privacy_note">The APK is downloaded in four segments, verified, and saved to the system Download folder. An ADB command is shown if installation is blocked.</string>
+    <string name="privacy_note">The APK is downloaded in four segments, verified, and saved to Downloads. An ADB command is shown if installation is blocked.</string>
 </resources>

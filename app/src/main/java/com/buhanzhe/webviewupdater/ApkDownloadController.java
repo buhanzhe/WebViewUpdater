@@ -581,6 +581,9 @@ public final class ApkDownloadController {
             if (record.file == null || (!contentUriAllowed && !record.file.isFile())) {
                 return "the downloaded APK was not found";
             }
+            if (contentUriAllowed && isEmpty(record.sha256)) {
+                return "the Release configuration has no SHA-256 for the existing APK";
+            }
             if (!isEmpty(record.sha256)) {
                 InputStream input = record.contentUri != null && contentUriAllowed
                         ? context.getContentResolver().openInputStream(record.contentUri)
