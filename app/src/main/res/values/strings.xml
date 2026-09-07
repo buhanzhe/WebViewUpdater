@@ -30,6 +30,7 @@
     <string name="cancel">取消</string>
     <string name="config_error">读取配置失败：%1$s</string>
     <string name="no_match">配置中没有适合此设备的 WebView 包</string>
+    <string name="webview_already_latest">恭喜你，你的 WebView 已经是最新的版本！</string>
     <string name="config_source">配置来源：%1$s</string>
     <string name="matched_version">%1$s（%2$s）</string>
     <string name="matched_detail">包名：%1$s\n架构：%2$s\n适用 Android：%3$s\n文件：%4$s</string>

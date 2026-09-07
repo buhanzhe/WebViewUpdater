@@ -10,7 +10,7 @@
   },
   "notes": [
     "Only ordinary standalone APK files are listed; APKM, split APK bundles and Trichrome packages are excluded.",
-    "Entries remain disabled until the corresponding APK is uploaded to this Release and its SHA-256 is filled in.",
+    "All listed APK files were verified, hashed and uploaded with the matching Release asset name.",
     "These Google-signed APKs only update an installed com.google.android.webview provider with a compatible signature."
   ],
   "packages": [
@@ -25,9 +25,9 @@
       "abis": ["armeabi-v7a"],
       "multiArch": false,
       "asset": "webview-95.0.4638.74-463807400-api21-22-armeabi-v7a.apk",
-      "sha256": "",
+      "sha256": "9451227e03983a77869c6f6a7ff6507b333b2d2a12b7eb9327c4b32e4d901dc3",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-95-0-4638-74-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-95-api21-22-arm64-arm",
@@ -40,9 +40,9 @@
       "abis": ["arm64-v8a", "armeabi-v7a"],
       "multiArch": true,
       "asset": "webview-95.0.4638.74-463807403-api21-22-arm64-v8a_armeabi-v7a.apk",
-      "sha256": "",
+      "sha256": "f368ffad20d70c131faac6f084a4dc1bf4e1dea5f22ecd7f89d59a286add1ed1",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-95-0-4638-74-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-95-api21-22-x86",
@@ -55,9 +55,9 @@
       "abis": ["x86"],
       "multiArch": false,
       "asset": "webview-95.0.4638.74-463807401-api21-22-x86.apk",
-      "sha256": "",
+      "sha256": "53084ce23d3ad3b72250d37e6e3297ef557df3290afe0f84cd36b629a676cfff",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-95-0-4638-74-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-95-api21-22-x86-64-x86",
@@ -70,9 +70,9 @@
       "abis": ["x86_64", "x86"],
       "multiArch": true,
       "asset": "webview-95.0.4638.74-463807406-api21-22-x86_64_x86.apk",
-      "sha256": "",
+      "sha256": "b7ef3c603fae9b8efc9c424a163f2a07f754890c06551d72f3d3e23d89f63846",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-95-0-4638-74-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-106-api23-arm",
@@ -85,9 +85,9 @@
       "abis": ["armeabi-v7a"],
       "multiArch": false,
       "asset": "webview-106.0.5249.126-524912600-api23-armeabi-v7a.apk",
-      "sha256": "",
+      "sha256": "608055587969dcabb7bc4e896c6d949f20ae7b2725a9e4192ab702a9384b9e2e",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-106-0-5249-126-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-106-api23-arm64-arm",
@@ -100,9 +100,9 @@
       "abis": ["arm64-v8a", "armeabi-v7a"],
       "multiArch": true,
       "asset": "webview-106.0.5249.126-524912603-api23-arm64-v8a_armeabi-v7a.apk",
-      "sha256": "",
+      "sha256": "13182d1a09508114d175c9db2bf0be2719da7a204be28140e7f8bd837d6eb788",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-106-0-5249-126-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-106-api23-x86",
@@ -115,9 +115,9 @@
       "abis": ["x86"],
       "multiArch": false,
       "asset": "webview-106.0.5249.126-524912601-api23-x86.apk",
-      "sha256": "",
+      "sha256": "bbcedc944cb0d1ff71f9eac8f2ea68bbfe2ac5184c24500fb625afb73cd35e2c",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-106-0-5249-126-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-106-api23-x86-64-x86",
@@ -130,9 +130,9 @@
       "abis": ["x86_64", "x86"],
       "multiArch": true,
       "asset": "webview-106.0.5249.126-524912606-api23-x86_64_x86.apk",
-      "sha256": "",
+      "sha256": "2fe8ef767accfe775ecba34b4294f7cc9cbfd09fed592fc572fcbeaf1ff96c8e",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-106-0-5249-126-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-119-api24-25-arm",
@@ -145,9 +145,9 @@
       "abis": ["armeabi-v7a"],
       "multiArch": false,
       "asset": "webview-119.0.6045.194-604519400-api24-25-armeabi-v7a.apk",
-      "sha256": "",
+      "sha256": "d98bed079f088d2cad30f6c5d319982d4074befc61a54ce4064b222cca558771",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-119-0-6045-194-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-119-api24-25-arm64-arm",
@@ -160,9 +160,9 @@
       "abis": ["arm64-v8a", "armeabi-v7a"],
       "multiArch": true,
       "asset": "webview-119.0.6045.194-604519401-api24-25-arm64-v8a_armeabi-v7a.apk",
-      "sha256": "",
+      "sha256": "940fb37a9d91d42ceacbde4c076e30eb2683c35d5901b95438d540337cd2df2b",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-119-0-6045-194-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-119-api24-25-x86",
@@ -175,9 +175,9 @@
       "abis": ["x86"],
       "multiArch": false,
       "asset": "webview-119.0.6045.194-604519406-api24-25-x86.apk",
-      "sha256": "",
+      "sha256": "8e38274bf1c3cef2ae01e621dd946593e19769cae8573accb21ced1a77d5b610",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-119-0-6045-194-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-119-api24-25-x86-64-x86",
@@ -190,9 +190,9 @@
       "abis": ["x86_64", "x86"],
       "multiArch": true,
       "asset": "webview-119.0.6045.194-604519407-api24-25-x86_64_x86.apk",
-      "sha256": "",
+      "sha256": "12ea51130a9206cee98bf34a6649d20b5bdddd68f348044ea1dd62fc53d6bc94",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-119-0-6045-194-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-138-api26-28-arm",
@@ -205,9 +205,9 @@
       "abis": ["armeabi-v7a"],
       "multiArch": false,
       "asset": "webview-138.0.7204.181-720418100-api26-28-armeabi-v7a.apk",
-      "sha256": "",
+      "sha256": "a7de80d7b69d4b38436c6e6cc09479a2e71008083e96b9b620a9abbd9bc13d33",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-138-0-7204-181-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-138-api26-28-arm64-arm",
@@ -220,9 +220,9 @@
       "abis": ["arm64-v8a", "armeabi-v7a"],
       "multiArch": true,
       "asset": "webview-138.0.7204.181-720418101-api26-28-arm64-v8a_armeabi-v7a.apk",
-      "sha256": "",
+      "sha256": "ef90254b3fd31edfc8c8cd35dbfbc4d81a2a4554a278b5cad9d4acfdd85e59ca",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-138-0-7204-181-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-138-api26-28-x86",
@@ -235,9 +235,9 @@
       "abis": ["x86"],
       "multiArch": false,
       "asset": "webview-138.0.7204.181-720418106-api26-28-x86.apk",
-      "sha256": "",
+      "sha256": "26cecd835bc2e2fdafb145695052594eab2aaaccddc1caea9222ba26ae47529c",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-138-0-7204-181-release/",
-      "enabled": false
+      "enabled": true
     },
     {
       "id": "google-webview-138-api26-28-x86-64-x86",
@@ -250,54 +250,9 @@
       "abis": ["x86_64", "x86"],
       "multiArch": true,
       "asset": "webview-138.0.7204.181-720418107-api26-28-x86_64_x86.apk",
-      "sha256": "",
+      "sha256": "17f2eb30cbcca07817ba9271ef5ea16fffd03a1eca750d02f501b7a96482845d",
       "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-138-0-7204-181-release/",
-      "enabled": false
-    },
-    {
-      "id": "google-webview-152-api29-32-arm",
-      "packageName": "com.google.android.webview",
-      "versionName": "152.0.7977.54",
-      "versionCode": 797705410,
-      "channel": "stable-current-for-android-10-12",
-      "minSdk": 29,
-      "maxSdk": 32,
-      "abis": ["armeabi-v7a"],
-      "multiArch": false,
-      "asset": "webview-152.0.7977.54-797705410-api29-32-armeabi-v7a.apk",
-      "sha256": "",
-      "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-152-0-7977-54-release/",
-      "enabled": false
-    },
-    {
-      "id": "google-webview-152-api29-32-arm64-arm",
-      "packageName": "com.google.android.webview",
-      "versionName": "152.0.7977.64",
-      "versionCode": 797706403,
-      "channel": "stable-current-for-android-10-12",
-      "minSdk": 29,
-      "maxSdk": 32,
-      "abis": ["arm64-v8a", "armeabi-v7a"],
-      "multiArch": true,
-      "asset": "webview-152.0.7977.64-797706403-api29-32-arm64-v8a_armeabi-v7a.apk",
-      "sha256": "",
-      "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-152-0-7977-64-release/",
-      "enabled": false
-    },
-    {
-      "id": "google-webview-138-api29-32-x86-64-x86",
-      "packageName": "com.google.android.webview",
-      "versionName": "138.0.7204.181",
-      "versionCode": 720418138,
-      "channel": "stable-apk-fallback-for-android-10-12-x86",
-      "minSdk": 29,
-      "maxSdk": 32,
-      "abis": ["x86_64", "x86"],
-      "multiArch": true,
-      "asset": "webview-138.0.7204.181-720418138-api29-32-x86_64_x86.apk",
-      "sha256": "",
-      "sourcePage": "https://www.apkmirror.com/apk/google-inc/android-system-webview/android-system-webview-138-0-7204-181-release/",
-      "enabled": false
+      "enabled": true
     }
   ]
 }

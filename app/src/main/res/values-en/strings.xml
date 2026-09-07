@@ -30,6 +30,7 @@
     <string name="cancel">Cancel</string>
     <string name="config_error">Could not read configuration: %1$s</string>
     <string name="no_match">No WebView package in the configuration matches this device</string>
+    <string name="webview_already_latest">Congratulations! Your WebView is already up to date.</string>
     <string name="config_source">Configuration source: %1$s</string>
     <string name="matched_version">%1$s (%2$s)</string>
     <string name="matched_detail">Package: %1$s\nABIs: %2$s\nAndroid: %3$s\nFile: %4$s</string>

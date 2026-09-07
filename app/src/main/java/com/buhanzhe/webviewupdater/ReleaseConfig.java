@@ -61,6 +61,56 @@ public final class ReleaseConfig {
         return best;
     }
 
+    public boolean isDeviceNewerThanCatalog(DeviceInfo deviceInfo) {
+        String currentPackage = deviceInfo.webViewPackageName();
+        String currentVersion = deviceInfo.webViewVersionName();
+        if (currentPackage.isEmpty() || currentVersion.isEmpty()) {
+            return false;
+        }
+
+        String newestConfiguredVersion = "";
+        for (WebViewPackage candidate : packages) {
+            if (!candidate.enabled || !candidate.packageName.equals(currentPackage)) {
+                continue;
+            }
+            if (newestConfiguredVersion.isEmpty()
+                    || compareVersionNames(candidate.versionName, newestConfiguredVersion) > 0) {
+                newestConfiguredVersion = candidate.versionName;
+            }
+        }
+        return !newestConfiguredVersion.isEmpty()
+                && compareVersionNames(currentVersion, newestConfiguredVersion) > 0;
+    }
+
+    private static int compareVersionNames(String left, String right) {
+        String[] leftParts = left.split("\\.");
+        String[] rightParts = right.split("\\.");
+        int count = Math.max(leftParts.length, rightParts.length);
+        for (int index = 0; index < count; index++) {
+            long leftPart = parseVersionPart(leftParts, index);
+            long rightPart = parseVersionPart(rightParts, index);
+            if (leftPart != rightPart) {
+                return leftPart < rightPart ? -1 : 1;
+            }
+        }
+        return 0;
+    }
+
+    private static long parseVersionPart(String[] parts, int index) {
+        if (index >= parts.length) {
+            return 0L;
+        }
+        String digits = parts[index].replaceAll("[^0-9].*$", "");
+        if (digits.isEmpty()) {
+            return 0L;
+        }
+        try {
+            return Long.parseLong(digits);
+        } catch (NumberFormatException ignored) {
+            return Long.MAX_VALUE;
+        }
+    }
+
     public static final class WebViewPackage {
         public final String id;
         public final String packageName;

@@ -39,6 +39,7 @@ public final class MainActivity extends Activity
     private ConfigRepository configRepository;
     private ApkDownloadController downloadController;
     private ReleaseConfig.WebViewPackage selectedPackage;
+    private boolean currentWebViewIsNewer;
     private String selectedAssetBaseUrl;
     private String selectedProxyPrefix;
     private int loadGeneration;
@@ -136,6 +137,7 @@ public final class MainActivity extends Activity
     private void refreshConfiguration(boolean userInitiated) {
         final int generation = ++loadGeneration;
         selectedPackage = null;
+        currentWebViewIsNewer = false;
         downloadButton.setEnabled(false);
         refreshButton.setEnabled(false);
         progress.setVisibility(View.VISIBLE);
@@ -158,6 +160,7 @@ public final class MainActivity extends Activity
                 selectedAssetBaseUrl = result.config.assetBaseUrl;
                 selectedProxyPrefix = result.proxyPrefix;
                 selectedPackage = result.config.findBestMatch(deviceInfo);
+                currentWebViewIsNewer = result.config.isDeviceNewerThanCatalog(deviceInfo);
                 renderMatch(result.sourceName, userInitiated);
             }
 
@@ -177,6 +180,15 @@ public final class MainActivity extends Activity
     }
 
     private void renderMatch(String sourceName, boolean userInitiated) {
+        if (currentWebViewIsNewer) {
+            selectedPackage = null;
+            matchTitleText.setText(R.string.webview_already_latest);
+            matchTitleText.setTextColor(getColorCompat(R.color.success));
+            matchDetailText.setText(getString(R.string.config_source, sourceName));
+            downloadButton.setEnabled(false);
+            return;
+        }
+
         if (selectedPackage == null) {
             matchTitleText.setText(R.string.no_match);
             matchTitleText.setTextColor(getColorCompat(R.color.warning));
