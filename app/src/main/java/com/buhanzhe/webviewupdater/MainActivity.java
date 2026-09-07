@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -48,6 +49,10 @@ public final class MainActivity extends Activity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        boolean television = isTelevision();
+        setRequestedOrientation(television
+                ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                : ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         setContentView(R.layout.activity_main);
 
         bindViews();
@@ -62,7 +67,7 @@ public final class MainActivity extends Activity
         if (!restoredDownload) {
             refreshConfiguration(false);
         }
-        if (isTelevision()) {
+        if (television) {
             refreshButton.requestFocus();
         }
     }
