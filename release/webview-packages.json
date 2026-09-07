@@ -8,6 +8,12 @@
     "certificateSha256": "6faf3c4140407473400934d117815a21af1cfefc5c0bee61c858bc3d72ba6fe5",
     "signaturePrefix": "1f38"
   },
+  "latestVersions": [
+    { "minSdk": 21, "maxSdk": 22, "packageName": "com.google.android.webview", "versionName": "95.0.4638.74" },
+    { "minSdk": 23, "maxSdk": 23, "packageName": "com.google.android.webview", "versionName": "106.0.5249.126" },
+    { "minSdk": 24, "maxSdk": 25, "packageName": "com.google.android.webview", "versionName": "119.0.6045.194" },
+    { "minSdk": 26, "maxSdk": 28, "packageName": "com.google.android.webview", "versionName": "138.0.7204.181" }
+  ],
   "notes": [
     "Only ordinary standalone APK files are listed; APKM, split APK bundles and Trichrome packages are excluded.",
     "All listed APK files were verified, hashed and uploaded with the matching Release asset name.",

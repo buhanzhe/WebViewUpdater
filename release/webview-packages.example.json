@@ -1,6 +1,14 @@
 {
   "schemaVersion": 1,
   "assetBaseUrl": "https://github.com/buhanzhe/WebViewUpdater/releases/latest/download/",
+  "latestVersions": [
+    {
+      "minSdk": 21,
+      "maxSdk": 35,
+      "packageName": "com.google.android.webview",
+      "versionName": "REPLACE_WITH_VERSION"
+    }
+  ],
   "packages": [
     {
       "id": "google-webview-version-arm64",
@@ -37,4 +45,3 @@
     }
   ]
 }
-

@@ -14,19 +14,6 @@ public final class ApkInstaller {
     }
 
     public static Result install(Activity activity, File apk) {
-        if (Build.VERSION.SDK_INT >= 26
-                && !activity.getPackageManager().canRequestPackageInstalls()) {
-            Intent permission = new Intent(
-                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:" + activity.getPackageName()));
-            try {
-                activity.startActivity(permission);
-                return Result.PERMISSION_REQUIRED;
-            } catch (ActivityNotFoundException ignored) {
-                return Result.NO_INSTALLER;
-            }
-        }
-
         Uri uri = ApkFileProvider.getUriForFile(activity, apk);
         Intent install = new Intent(Intent.ACTION_VIEW)
                 .setDataAndType(uri, "application/vnd.android.package-archive")
@@ -35,6 +22,24 @@ public final class ApkInstaller {
         try {
             activity.startActivity(install);
             return Result.STARTED;
+        } catch (ActivityNotFoundException ignored) {
+            return Result.NO_INSTALLER;
+        } catch (SecurityException ignored) {
+            if (Build.VERSION.SDK_INT >= 26
+                    && !activity.getPackageManager().canRequestPackageInstalls()) {
+                return requestInstallPermission(activity);
+            }
+            return Result.NO_INSTALLER;
+        }
+    }
+
+    private static Result requestInstallPermission(Activity activity) {
+        Intent permission = new Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:" + activity.getPackageName()));
+        try {
+            activity.startActivity(permission);
+            return Result.PERMISSION_REQUIRED;
         } catch (ActivityNotFoundException | SecurityException ignored) {
             return Result.NO_INSTALLER;
         }

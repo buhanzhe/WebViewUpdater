@@ -15,7 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
-/** Minimal, read-only provider for APKs created by this app's DownloadManager request. */
+/** Minimal, read-only provider for APKs downloaded into this app's private directories. */
 public final class ApkFileProvider extends ContentProvider {
     private static final String EXTERNAL = "external";
     private static final String CACHE = "cache";
@@ -140,4 +140,3 @@ public final class ApkFileProvider extends ContentProvider {
         return child.getCanonicalPath().startsWith(basePath);
     }
 }
-

@@ -14,11 +14,16 @@ public final class ReleaseConfig {
 
     public final int schemaVersion;
     public final String assetBaseUrl;
+    public final List<LatestVersion> latestVersions;
     public final List<WebViewPackage> packages;
 
-    private ReleaseConfig(int schemaVersion, String assetBaseUrl, List<WebViewPackage> packages) {
+    private ReleaseConfig(int schemaVersion,
+                          String assetBaseUrl,
+                          List<LatestVersion> latestVersions,
+                          List<WebViewPackage> packages) {
         this.schemaVersion = schemaVersion;
         this.assetBaseUrl = assetBaseUrl;
+        this.latestVersions = Collections.unmodifiableList(latestVersions);
         this.packages = Collections.unmodifiableList(packages);
     }
 
@@ -29,6 +34,13 @@ public final class ReleaseConfig {
             throw new JSONException("unsupported schemaVersion: " + schema);
         }
         String baseUrl = root.optString("assetBaseUrl", "").trim();
+        List<LatestVersion> latestVersions = new ArrayList<>();
+        JSONArray latestVersionArray = root.optJSONArray("latestVersions");
+        if (latestVersionArray != null) {
+            for (int index = 0; index < latestVersionArray.length(); index++) {
+                latestVersions.add(LatestVersion.parse(latestVersionArray.getJSONObject(index)));
+            }
+        }
         JSONArray packageArray = root.getJSONArray("packages");
         List<WebViewPackage> result = new ArrayList<>();
         for (int index = 0; index < packageArray.length(); index++) {
@@ -41,7 +53,7 @@ public final class ReleaseConfig {
                 }
             }
         }
-        return new ReleaseConfig(schema, baseUrl, result);
+        return new ReleaseConfig(schema, baseUrl, latestVersions, result);
     }
 
     public WebViewPackage findBestMatch(DeviceInfo deviceInfo) {
@@ -61,15 +73,30 @@ public final class ReleaseConfig {
         return best;
     }
 
-    public boolean isDeviceNewerThanCatalog(DeviceInfo deviceInfo) {
+    public boolean isDeviceAtLeastRecommendedVersion(DeviceInfo deviceInfo) {
         String currentPackage = deviceInfo.webViewPackageName();
         String currentVersion = deviceInfo.webViewVersionName();
         if (currentPackage.isEmpty() || currentVersion.isEmpty()) {
             return false;
         }
 
+        for (LatestVersion latestVersion : latestVersions) {
+            if (latestVersion.matches(deviceInfo, currentPackage)) {
+                return compareVersionNames(currentVersion, latestVersion.versionName) >= 0;
+            }
+        }
+
+        WebViewPackage compatiblePackage = findBestMatch(deviceInfo);
+        if (compatiblePackage != null) {
+            // APK variant codes differ by ABI. The configured version name is the
+            // comparable WebView release number across all of those variants.
+            return compareVersionNames(currentVersion, compatiblePackage.versionName) >= 0;
+        }
+
+        // A newer Android version may intentionally have no downloadable APK in
+        // this catalog. It is still current when its provider is newer than every
+        // release we offer.
         String newestConfiguredVersion = "";
-        long newestConfiguredVersionCode = 0L;
         for (WebViewPackage candidate : packages) {
             if (!candidate.enabled || !candidate.packageName.equals(currentPackage)) {
                 continue;
@@ -79,20 +106,12 @@ public final class ReleaseConfig {
                     : compareVersionNames(candidate.versionName, newestConfiguredVersion);
             if (versionComparison > 0) {
                 newestConfiguredVersion = candidate.versionName;
-                newestConfiguredVersionCode = candidate.versionCode;
-            } else if (versionComparison == 0) {
-                newestConfiguredVersionCode = Math.max(
-                        newestConfiguredVersionCode,
-                        candidate.versionCode);
             }
         }
         if (newestConfiguredVersion.isEmpty()) {
             return false;
         }
-        int versionComparison = compareVersionNames(currentVersion, newestConfiguredVersion);
-        return versionComparison > 0
-                || (versionComparison == 0
-                && deviceInfo.webViewVersionCode() > newestConfiguredVersionCode);
+        return compareVersionNames(currentVersion, newestConfiguredVersion) >= 0;
     }
 
     private static int compareVersionNames(String left, String right) {
@@ -121,6 +140,41 @@ public final class ReleaseConfig {
             return Long.parseLong(digits);
         } catch (NumberFormatException ignored) {
             return Long.MAX_VALUE;
+        }
+    }
+
+    public static final class LatestVersion {
+        public final int minSdk;
+        public final int maxSdk;
+        public final String packageName;
+        public final String versionName;
+
+        private LatestVersion(int minSdk,
+                              int maxSdk,
+                              String packageName,
+                              String versionName) {
+            this.minSdk = minSdk;
+            this.maxSdk = maxSdk;
+            this.packageName = packageName;
+            this.versionName = versionName;
+        }
+
+        static LatestVersion parse(JSONObject value) throws JSONException {
+            int minSdk = value.getInt("minSdk");
+            int maxSdk = value.getInt("maxSdk");
+            String packageName = value.getString("packageName").trim();
+            String versionName = value.getString("versionName").trim();
+            if (minSdk < 1 || maxSdk < minSdk
+                    || packageName.isEmpty() || versionName.isEmpty()) {
+                throw new JSONException("invalid latestVersions entry");
+            }
+            return new LatestVersion(minSdk, maxSdk, packageName, versionName);
+        }
+
+        boolean matches(DeviceInfo deviceInfo, String currentPackage) {
+            return deviceInfo.sdkInt >= minSdk
+                    && deviceInfo.sdkInt <= maxSdk
+                    && packageName.equals(currentPackage);
         }
     }
 
