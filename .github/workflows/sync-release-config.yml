@@ -1,0 +1,29 @@
+name: Sync release config
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - release/webview-packages.json
+      - .github/workflows/sync-release-config.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Replace config asset in v0.1.1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release upload v0.1.1
+          release/webview-packages.json
+          --clobber
+          --repo "$GITHUB_REPOSITORY"
