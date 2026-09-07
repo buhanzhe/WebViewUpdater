@@ -20,7 +20,6 @@
     <string name="download">Save to Downloads</string>
     <string name="check_again">Check again</string>
     <string name="download_settings">Download source</string>
-    <string name="proxy_status">Source: %1$s</string>
     <string name="proxy_auto">Automatic (gh-proxy.com → direct GitHub)</string>
     <string name="proxy_one">gh-proxy.com</string>
     <string name="proxy_direct">Direct GitHub</string>
@@ -60,5 +59,4 @@
     <string name="ok">OK</string>
     <string name="invalid_custom_proxy">Enter a proxy URL beginning with http:// or https://</string>
     <string name="provider_missing">No usable WebView provider was detected</string>
-    <string name="privacy_note">The APK is downloaded in four segments, verified, and saved to Downloads. An ADB command is shown if installation is blocked.</string>
 </resources>

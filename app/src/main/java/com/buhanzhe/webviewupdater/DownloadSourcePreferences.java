@@ -61,21 +61,6 @@ public final class DownloadSourcePreferences {
         return automatic;
     }
 
-    public String displayName(Context context) {
-        String mode = getMode();
-        if (MODE_PROXY_COM.equals(mode)) {
-            return context.getString(R.string.proxy_one);
-        }
-        if (MODE_DIRECT.equals(mode)) {
-            return context.getString(R.string.proxy_direct);
-        }
-        if (MODE_CUSTOM.equals(mode)) {
-            String custom = getCustomProxy();
-            return custom.isEmpty() ? context.getString(R.string.proxy_custom) : custom;
-        }
-        return context.getString(R.string.proxy_auto);
-    }
-
     public static boolean isValidCustomProxy(String value) {
         try {
             URI uri = URI.create(value == null ? "" : value.trim());

@@ -50,7 +50,6 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
     private TextView webViewInfoText;
     private TextView matchTitleText;
     private TextView matchDetailText;
-    private TextView proxyStatusText;
     private ProgressBar progress;
     private Button downloadButton;
     private Button refreshButton;
@@ -83,7 +82,6 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
         downloadController = new ApkDownloadController(this, this);
         deviceInfo = DeviceDetector.detect(this);
         renderDeviceInfo();
-        updateProxyStatus();
         wireActions();
 
         if (!downloadController.restore()) {
@@ -121,7 +119,6 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
         webViewInfoText = findViewById(R.id.webViewInfoText);
         matchTitleText = findViewById(R.id.matchTitleText);
         matchDetailText = findViewById(R.id.matchDetailText);
-        proxyStatusText = findViewById(R.id.proxyStatusText);
         progress = findViewById(R.id.progress);
         downloadButton = findViewById(R.id.downloadButton);
         refreshButton = findViewById(R.id.refreshButton);
@@ -476,14 +473,7 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
     }
 
     private void sourceChanged() {
-        updateProxyStatus();
         refreshConfiguration(true);
-    }
-
-    private void updateProxyStatus() {
-        proxyStatusText.setText(getString(
-                R.string.proxy_status,
-                sourcePreferences.displayName(this)));
     }
 
     @Override

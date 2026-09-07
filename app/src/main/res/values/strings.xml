@@ -20,7 +20,6 @@
     <string name="download">保存到下载目录</string>
     <string name="check_again">重新检查</string>
     <string name="download_settings">下载源设置</string>
-    <string name="proxy_status">下载源：%1$s</string>
     <string name="proxy_auto">自动（gh-proxy.com → GitHub 直连）</string>
     <string name="proxy_one">gh-proxy.com</string>
     <string name="proxy_direct">GitHub 直连</string>
@@ -60,5 +59,4 @@
     <string name="ok">确定</string>
     <string name="invalid_custom_proxy">请输入以 http:// 或 https:// 开头的加速站地址</string>
     <string name="provider_missing">未检测到可用的 WebView 实现</string>
-    <string name="privacy_note">APK 使用四路分块下载，校验后保存到下载目录；系统拒绝安装时提供 ADB 命令。</string>
 </resources>
