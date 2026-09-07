@@ -1,30 +1,47 @@
 package com.buhanzhe.webviewupdater;
 
+import android.Manifest;
 import android.app.UiModeManager;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.SharedPreferences;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.Settings;
 import android.text.InputType;
 import android.text.TextUtils;
 import android.view.View;
-import android.widget.EditText;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-
-public final class MainActivity extends Activity
-        implements ApkDownloadController.Listener {
+public final class MainActivity extends Activity implements ApkDownloadController.Listener {
+    private static final int STORAGE_PERMISSION_REQUEST = 41;
     private static final String INSTALL_STATE = "install_state";
-    private static final String KEY_PENDING_APK = "pending_apk";
+    private static final String KEY_PENDING_PACKAGE = "package";
+    private static final String KEY_PENDING_VERSION_NAME = "version_name";
+    private static final String KEY_PENDING_VERSION_CODE = "version_code";
+    private static final String KEY_PENDING_PATH = "path";
+    private static final String KEY_PENDING_URI = "uri";
+    private static final String KEY_PENDING_PHASE = "phase";
+    private static final String PHASE_PERMISSION = "permission";
+    private static final String PHASE_INSTALLER = "installer";
 
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private TextView deviceInfoText;
     private TextView webViewInfoText;
     private TextView matchTitleText;
@@ -45,6 +62,7 @@ public final class MainActivity extends Activity
     private String selectedProxyPrefix;
     private int loadGeneration;
     private boolean resumedOnce;
+    private boolean downloadAfterPermission;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,8 +81,7 @@ public final class MainActivity extends Activity
         updateProxyStatus();
         wireActions();
 
-        boolean restoredDownload = downloadController.restore();
-        if (!restoredDownload) {
+        if (!downloadController.restore()) {
             refreshConfiguration(false);
         }
         if (television) {
@@ -79,7 +96,7 @@ public final class MainActivity extends Activity
             resumedOnce = true;
             return;
         }
-        tryPendingInstall();
+        mainHandler.postDelayed(this::checkPendingInstallResult, 800L);
     }
 
     @Override
@@ -90,6 +107,7 @@ public final class MainActivity extends Activity
         if (downloadController != null) {
             downloadController.close();
         }
+        mainHandler.removeCallbacksAndMessages(null);
         super.onDestroy();
     }
 
@@ -226,16 +244,88 @@ public final class MainActivity extends Activity
         if (selectedPackage == null) {
             return;
         }
-        String rawUrl = selectedPackage.resolveUrl(selectedAssetBaseUrl == null ? "" : selectedAssetBaseUrl);
-        String url = DownloadSourcePreferences.applyProxy(rawUrl, selectedProxyPrefix);
+        if (Build.VERSION.SDK_INT >= 23 && Build.VERSION.SDK_INT <= 28
+                && checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            downloadAfterPermission = true;
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    STORAGE_PERMISSION_REQUEST);
+            return;
+        }
+        startDownloadWithPermission();
+    }
+
+    private void startDownloadWithPermission() {
+        if (selectedPackage == null) {
+            return;
+        }
         try {
-            downloadController.start(url, selectedPackage);
-            downloadButton.setEnabled(false);
-            refreshButton.setEnabled(false);
-            settingsButton.setEnabled(false);
+            downloadController.start(selectedDownloadUrl(), selectedPackage);
+            setActionsEnabled(false);
         } catch (Exception error) {
             Toast.makeText(this, error.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private String selectedDownloadUrl() {
+        String rawUrl = selectedPackage.resolveUrl(
+                selectedAssetBaseUrl == null ? "" : selectedAssetBaseUrl);
+        return DownloadSourcePreferences.applyProxy(rawUrl, selectedProxyPrefix);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String[] permissions,
+                                           int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != STORAGE_PERMISSION_REQUEST || !downloadAfterPermission) {
+            return;
+        }
+        downloadAfterPermission = false;
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startDownloadWithPermission();
+        } else {
+            Toast.makeText(this, R.string.storage_permission_required, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void showInstallCommand(ApkDownloadController.DownloadRecord record, int message) {
+        String command = "adb shell pm install -r \"" + record.file.getAbsolutePath() + "\"";
+        EditText commandText = new EditText(this);
+        commandText.setText(command);
+        commandText.setTextIsSelectable(true);
+        commandText.setKeyListener(null);
+        commandText.setSingleLine(false);
+        commandText.setPadding(dp(12), dp(10), dp(12), dp(10));
+
+        LinearLayout content = dialogContent();
+        TextView help = new TextView(this);
+        help.setText(message);
+        help.setTextColor(getColorCompat(R.color.text_secondary));
+        content.addView(help, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        LinearLayout.LayoutParams commandParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        commandParams.topMargin = dp(10);
+        content.addView(commandText, commandParams);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.install_command_title)
+                .setView(content)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.copy_command, (dialog, which) -> {
+                    ClipboardManager clipboard = (ClipboardManager)
+                            getSystemService(Context.CLIPBOARD_SERVICE);
+                    if (clipboard != null) {
+                        clipboard.setPrimaryClip(ClipData.newPlainText(
+                                getString(R.string.install_command_title), command));
+                        Toast.makeText(this, R.string.install_command_copied,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .show();
     }
 
     private void showSourceDialog() {
@@ -262,7 +352,12 @@ public final class MainActivity extends Activity
 
         final AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.download_settings)
-                .setSingleChoiceItems(labels, checked, null)
+                .setSingleChoiceItems(labels, checked, (sourceDialog, selected) -> {
+                    if (DownloadSourcePreferences.MODE_CUSTOM.equals(modes[selected])) {
+                        sourceDialog.dismiss();
+                        showCustomProxyDialog();
+                    }
+                })
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.save, null)
                 .create();
@@ -285,17 +380,30 @@ public final class MainActivity extends Activity
     }
 
     private void showCustomProxyDialog() {
+        LinearLayout content = dialogContent();
+        TextView help = new TextView(this);
+        help.setText(R.string.custom_proxy_help);
+        help.setTextColor(getColorCompat(R.color.text_secondary));
+        content.addView(help, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+
         EditText input = new EditText(this);
         input.setSingleLine(true);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         input.setHint(R.string.custom_proxy_hint);
         input.setText(sourcePreferences.getCustomProxy());
-        int padding = Math.round(24 * getResources().getDisplayMetrics().density);
-        input.setPadding(padding, padding / 2, padding, 0);
+        input.setMinHeight(dp(52));
+        input.setPadding(dp(12), 0, dp(12), 0);
+        LinearLayout.LayoutParams inputParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        inputParams.topMargin = dp(8);
+        content.addView(input, inputParams);
 
         final AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.proxy_custom)
-                .setView(input)
+                .setView(content)
                 .setNegativeButton(R.string.cancel, null)
                 .setPositiveButton(R.string.save, null)
                 .create();
@@ -312,6 +420,17 @@ public final class MainActivity extends Activity
                     sourceChanged();
                 }));
         dialog.show();
+    }
+
+    private LinearLayout dialogContent() {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(24), dp(8), dp(24), 0);
+        return content;
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private void sourceChanged() {
@@ -345,63 +464,154 @@ public final class MainActivity extends Activity
     }
 
     @Override
-    public void onVerifying() {
+    public void onVerifying(boolean existing) {
         progress.setVisibility(View.VISIBLE);
         progress.setIndeterminate(true);
-        matchTitleText.setText(R.string.verifying);
+        matchTitleText.setText(existing
+                ? R.string.checking_existing_apk : R.string.verifying);
     }
 
     @Override
-    public void onReadyToInstall(File apk) {
+    public void onReady(ApkDownloadController.DownloadRecord record, boolean existing) {
         progress.setVisibility(View.GONE);
-        getSharedPreferences(INSTALL_STATE, MODE_PRIVATE)
-                .edit().putString(KEY_PENDING_APK, apk.getAbsolutePath()).apply();
-        attemptInstall(apk);
         setActionsEnabled(true);
+        if (existing) {
+            showInstallCommand(record, R.string.apk_already_downloaded);
+        } else {
+            attemptDirectInstall(record);
+        }
     }
 
     @Override
-    public void onChecksumFailed(String detail) {
+    public void onValidationFailed(String detail, boolean existing) {
         progress.setVisibility(View.GONE);
-        matchTitleText.setText(R.string.checksum_failed);
+        matchTitleText.setText(existing
+                ? R.string.existing_apk_invalid : R.string.checksum_failed);
         matchTitleText.setTextColor(getColorCompat(R.color.warning));
+        matchDetailText.setText(detail == null ? "" : detail);
         setActionsEnabled(true);
     }
 
     @Override
     public void onFailed(int reason, String detail) {
         progress.setVisibility(View.GONE);
-        String message = detail == null
-                ? getString(R.string.download_failed, reason)
-                : getString(R.string.download_failed, reason) + "\n" + detail;
-        matchTitleText.setText(message);
+        String message = getString(R.string.download_failed, reason);
+        matchTitleText.setText(detail == null ? message : message + "\n" + detail);
         matchTitleText.setTextColor(getColorCompat(R.color.warning));
         setActionsEnabled(true);
     }
 
-    private void tryPendingInstall() {
-        String path = getSharedPreferences(INSTALL_STATE, MODE_PRIVATE)
-                .getString(KEY_PENDING_APK, "");
-        if (path != null && !path.isEmpty()) {
-            File file = new File(path);
-            if (file.isFile()) {
-                attemptInstall(file);
-            } else {
-                clearPendingInstall();
-            }
+    private void attemptDirectInstall(ApkDownloadController.DownloadRecord record) {
+        if (record.contentUri == null) {
+            showInstallCommand(record, R.string.direct_install_unavailable);
+            return;
+        }
+        getSharedPreferences(INSTALL_STATE, MODE_PRIVATE).edit()
+                .putString(KEY_PENDING_PACKAGE, record.packageName)
+                .putString(KEY_PENDING_VERSION_NAME, record.versionName)
+                .putLong(KEY_PENDING_VERSION_CODE, record.versionCode)
+                .putString(KEY_PENDING_PATH, record.file.getAbsolutePath())
+                .putString(KEY_PENDING_URI, record.contentUri.toString())
+                .apply();
+        if (Build.VERSION.SDK_INT >= 26
+                && !getPackageManager().canRequestPackageInstalls()) {
+            requestInstallPermission(record);
+            return;
+        }
+        startPackageInstaller(record);
+    }
+
+    private void requestInstallPermission(ApkDownloadController.DownloadRecord record) {
+        getSharedPreferences(INSTALL_STATE, MODE_PRIVATE).edit()
+                .putString(KEY_PENDING_PHASE, PHASE_PERMISSION)
+                .apply();
+        Intent settings = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                Uri.parse("package:" + getPackageName()));
+        try {
+            startActivity(settings);
+        } catch (ActivityNotFoundException | SecurityException error) {
+            clearPendingInstall();
+            showInstallCommand(record, R.string.direct_install_unavailable);
         }
     }
 
-    private void attemptInstall(File apk) {
-        ApkInstaller.Result result = ApkInstaller.install(this, apk);
-        if (result == ApkInstaller.Result.PERMISSION_REQUIRED) {
-            Toast.makeText(this, R.string.install_permission, Toast.LENGTH_LONG).show();
-        } else {
+    private void startPackageInstaller(ApkDownloadController.DownloadRecord record) {
+        getSharedPreferences(INSTALL_STATE, MODE_PRIVATE).edit()
+                .putString(KEY_PENDING_PHASE, PHASE_INSTALLER)
+                .apply();
+        Intent install = new Intent(Intent.ACTION_VIEW)
+                .setDataAndType(record.contentUri, "application/vnd.android.package-archive")
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try {
+            startActivity(install);
+        } catch (ActivityNotFoundException | SecurityException error) {
             clearPendingInstall();
-            if (result == ApkInstaller.Result.NO_INSTALLER) {
-                Toast.makeText(this, R.string.installer_missing, Toast.LENGTH_LONG).show();
-            }
+            showInstallCommand(record, R.string.direct_install_unavailable);
         }
+    }
+
+    private void checkPendingInstallResult() {
+        android.content.SharedPreferences pending = getSharedPreferences(
+                INSTALL_STATE, MODE_PRIVATE);
+        String packageName = pending.getString(KEY_PENDING_PACKAGE, "");
+        if (packageName == null || packageName.isEmpty()) {
+            return;
+        }
+        String expectedVersionName = pending.getString(KEY_PENDING_VERSION_NAME, "");
+        long expectedVersionCode = pending.getLong(KEY_PENDING_VERSION_CODE, 0L);
+        String path = pending.getString(KEY_PENDING_PATH, "");
+        String uri = pending.getString(KEY_PENDING_URI, "");
+        String phase = pending.getString(KEY_PENDING_PHASE, "");
+
+        ApkDownloadController.DownloadRecord record =
+                new ApkDownloadController.DownloadRecord(
+                        new java.io.File(path == null ? "" : path),
+                        path == null ? "" : new java.io.File(path).getName(),
+                        "",
+                        packageName,
+                        expectedVersionName,
+                        expectedVersionCode,
+                        TextUtils.isEmpty(uri) ? null : Uri.parse(uri));
+
+        if (PHASE_PERMISSION.equals(phase)) {
+            if (Build.VERSION.SDK_INT >= 26
+                    && getPackageManager().canRequestPackageInstalls()) {
+                startPackageInstaller(record);
+            } else {
+                clearPendingInstall();
+                showInstallCommand(record, R.string.direct_install_not_completed);
+            }
+            return;
+        }
+
+        boolean installed = false;
+        try {
+            //noinspection deprecation
+            PackageInfo current = getPackageManager().getPackageInfo(packageName, 0);
+            boolean versionNameMatches = !TextUtils.isEmpty(expectedVersionName)
+                    && ReleaseConfig.compareVersionNames(
+                    current.versionName == null ? "" : current.versionName,
+                    expectedVersionName) >= 0;
+            boolean versionCodeMatches = expectedVersionCode > 0L
+                    && packageVersionCode(current) >= expectedVersionCode;
+            installed = versionNameMatches || versionCodeMatches;
+        } catch (PackageManager.NameNotFoundException ignored) {
+            // The command fallback below remains available.
+        }
+        clearPendingInstall();
+        if (installed) {
+            deviceInfo = DeviceDetector.detect(this);
+            renderDeviceInfo();
+            refreshConfiguration(false);
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.install_success_title)
+                    .setMessage(getString(R.string.install_success_message, expectedVersionName))
+                    .setPositiveButton(R.string.ok, null)
+                    .show();
+            return;
+        }
+
+        showInstallCommand(record, R.string.direct_install_not_completed);
     }
 
     private void clearPendingInstall() {
@@ -412,6 +622,14 @@ public final class MainActivity extends Activity
         downloadButton.setEnabled(enabled && selectedPackage != null);
         refreshButton.setEnabled(enabled);
         settingsButton.setEnabled(enabled);
+    }
+
+    private static long packageVersionCode(PackageInfo packageInfo) {
+        if (Build.VERSION.SDK_INT >= 28) {
+            return packageInfo.getLongVersionCode();
+        }
+        //noinspection deprecation
+        return packageInfo.versionCode;
     }
 
     private String joinOrUnknown(java.util.List<String> values) {

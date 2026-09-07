@@ -114,7 +114,7 @@ public final class ReleaseConfig {
         return compareVersionNames(currentVersion, newestConfiguredVersion) >= 0;
     }
 
-    private static int compareVersionNames(String left, String right) {
+    static int compareVersionNames(String left, String right) {
         String[] leftParts = left.split("\\.");
         String[] rightParts = right.split("\\.");
         int count = Math.max(leftParts.length, rightParts.length);

@@ -1,13 +1,20 @@
 package com.buhanzhe.webviewupdater;
 
+import android.annotation.TargetApi;
+import android.content.ContentResolver;
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.MediaStore;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -16,6 +23,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -39,6 +47,7 @@ public final class ApkDownloadController {
     private static final String KEY_SHA256 = "sha256";
     private static final String KEY_NAME = "name";
     private static final String KEY_PACKAGE_NAME = "package_name";
+    private static final String KEY_VERSION_NAME = "version_name";
     private static final String KEY_VERSION_CODE = "version_code";
     private static final String KEY_TOTAL_BYTES = "total_bytes";
     private static final String KEY_SEGMENTS = "segments";
@@ -116,6 +125,13 @@ public final class ApkDownloadController {
             throw new IOException("invalid download URL");
         }
 
+        DownloadRecord existing = findExisting(selectedPackage);
+        if (existing != null) {
+            listener.onStarted(selectedPackage.fileName());
+            verifyExisting(existing);
+            return;
+        }
+
         File base = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
         if (base == null) {
             base = new File(context.getCacheDir(), "downloads");
@@ -134,6 +150,7 @@ public final class ApkDownloadController {
                 .putString(KEY_SHA256, selectedPackage.sha256)
                 .putString(KEY_NAME, selectedPackage.fileName())
                 .putString(KEY_PACKAGE_NAME, selectedPackage.packageName)
+                .putString(KEY_VERSION_NAME, selectedPackage.versionName)
                 .putLong(KEY_VERSION_CODE, selectedPackage.versionCode)
                 .putLong(KEY_TOTAL_BYTES, -1L)
                 .remove(KEY_SEGMENTS)
@@ -488,43 +505,27 @@ public final class ApkDownloadController {
 
     private void verifyDownloadedFile() {
         verifying = true;
-        listener.onVerifying();
+        listener.onVerifying(false);
         String path = state.getString(KEY_PATH, "");
-        String expected = state.getString(KEY_SHA256, "");
-        String expectedPackageName = state.getString(KEY_PACKAGE_NAME, "");
-        long expectedVersionCode = state.getLong(KEY_VERSION_CODE, 0L);
+        DownloadRecord temporary = new DownloadRecord(
+                new File(path == null ? "" : path),
+                state.getString(KEY_NAME, "APK"),
+                state.getString(KEY_SHA256, ""),
+                state.getString(KEY_PACKAGE_NAME, ""),
+                state.getString(KEY_VERSION_NAME, ""),
+                state.getLong(KEY_VERSION_CODE, 0L),
+                null);
         coordinator.execute(() -> {
-            File apk = new File(path == null ? "" : path);
-            boolean valid = apk.isFile();
-            String error = null;
-            if (valid && expected != null && !expected.isEmpty()) {
+            String error = validate(temporary, false);
+            DownloadRecord published = null;
+            if (error == null) {
                 try {
-                    valid = expected.equalsIgnoreCase(sha256(apk));
+                    published = publish(temporary);
                 } catch (Exception exception) {
-                    valid = false;
                     error = exception.getMessage();
                 }
             }
-            if (valid) {
-                //noinspection deprecation
-                PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(
-                        apk.getAbsolutePath(), PackageManager.GET_META_DATA);
-                if (archive == null) {
-                    valid = false;
-                    error = "the file is not a readable APK";
-                } else if (expectedPackageName != null
-                        && !expectedPackageName.isEmpty()
-                        && !"*".equals(expectedPackageName)
-                        && !expectedPackageName.equals(archive.packageName)) {
-                    valid = false;
-                    error = "APK package name does not match the Release configuration";
-                } else if (expectedVersionCode > 0L
-                        && expectedVersionCode != getVersionCode(archive)) {
-                    valid = false;
-                    error = "APK version code does not match the Release configuration";
-                }
-            }
-            boolean finalValid = valid;
+            DownloadRecord finalPublished = published;
             String finalError = error;
             handler.post(() -> {
                 verifying = false;
@@ -532,16 +533,107 @@ public final class ApkDownloadController {
                 if (closed) {
                     return;
                 }
-                if (finalValid) {
-                    listener.onReadyToInstall(apk);
+                if (finalError == null && finalPublished != null) {
+                    listener.onReady(finalPublished, false);
                 } else {
                     // A mismatched file must never be offered to the package installer.
                     //noinspection ResultOfMethodCallIgnored
-                    apk.delete();
-                    listener.onChecksumFailed(finalError);
+                    temporary.file.delete();
+                    listener.onValidationFailed(finalError, false);
                 }
             });
         });
+    }
+
+    private DownloadRecord findExisting(ReleaseConfig.WebViewPackage webViewPackage)
+            throws IOException {
+        if (Build.VERSION.SDK_INT >= 29) {
+            Uri uri = Api29Downloads.find(context.getContentResolver(), webViewPackage.fileName());
+            return uri == null ? null : record(webViewPackage,
+                    publicFile(webViewPackage.fileName()), uri);
+        }
+        File file = publicFile(webViewPackage.fileName());
+        return file.isFile() ? record(webViewPackage, file,
+                PublicDownloadProvider.getUriForFile(context, file)) : null;
+    }
+
+    private void verifyExisting(DownloadRecord existing) {
+        verifying = true;
+        listener.onVerifying(true);
+        coordinator.execute(() -> {
+            String error = validate(existing, true);
+            handler.post(() -> {
+                verifying = false;
+                if (closed) {
+                    return;
+                }
+                if (error == null) {
+                    listener.onReady(existing, true);
+                } else {
+                    listener.onValidationFailed(error, true);
+                }
+            });
+        });
+    }
+
+    private String validate(DownloadRecord record, boolean contentUriAllowed) {
+        try {
+            if (record.file == null || (!contentUriAllowed && !record.file.isFile())) {
+                return "the downloaded APK was not found";
+            }
+            if (!isEmpty(record.sha256)) {
+                InputStream input = record.contentUri != null && contentUriAllowed
+                        ? context.getContentResolver().openInputStream(record.contentUri)
+                        : new FileInputStream(record.file);
+                if (!record.sha256.equalsIgnoreCase(sha256(input))) {
+                    return "SHA-256 does not match the Release configuration";
+                }
+            }
+            if (record.contentUri == null || Build.VERSION.SDK_INT < 29) {
+                //noinspection deprecation
+                PackageInfo archive = context.getPackageManager().getPackageArchiveInfo(
+                        record.file.getAbsolutePath(), PackageManager.GET_META_DATA);
+                if (archive == null) {
+                    return "the downloaded file is not a readable APK";
+                }
+                if (!"*".equals(record.packageName)
+                        && !record.packageName.equals(archive.packageName)) {
+                    return "APK package name does not match the Release configuration";
+                }
+                if (record.versionCode > 0L && record.versionCode != getVersionCode(archive)) {
+                    return "APK version code does not match the Release configuration";
+                }
+            }
+            return null;
+        } catch (Exception error) {
+            return error.getMessage();
+        }
+    }
+
+    private DownloadRecord publish(DownloadRecord temporary) throws IOException {
+        if (Build.VERSION.SDK_INT >= 29) {
+            Uri uri = Api29Downloads.publish(context.getContentResolver(),
+                    temporary.file, temporary.fileName);
+            //noinspection ResultOfMethodCallIgnored
+            temporary.file.delete();
+            return temporary.withFile(publicFile(temporary.fileName), uri);
+        }
+        File destination = publicFile(temporary.fileName);
+        if (destination.exists()) {
+            throw new IOException("an APK with the same name already exists in Downloads");
+        }
+        copy(temporary.file, destination);
+        //noinspection ResultOfMethodCallIgnored
+        temporary.file.delete();
+        return temporary.withFile(destination,
+                PublicDownloadProvider.getUriForFile(context, destination));
+    }
+
+    private static DownloadRecord record(ReleaseConfig.WebViewPackage source,
+                                         File file,
+                                         Uri uri) {
+        return new DownloadRecord(file, source.fileName(), source.sha256,
+                source.packageName, source.versionName, source.versionCode, uri);
     }
 
     private void deletePartialFiles() {
@@ -558,9 +650,30 @@ public final class ApkDownloadController {
         state.edit().clear().apply();
     }
 
-    private static String sha256(File file) throws Exception {
+    @SuppressWarnings("deprecation")
+    private static File publicFile(String fileName) throws IOException {
+        File directory = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS);
+        if (!directory.isDirectory() && !directory.mkdirs()) {
+            throw new IOException("cannot access the system download directory");
+        }
+        return new File(directory, fileName);
+    }
+
+    private static void copy(File source, File destination) throws IOException {
+        try (InputStream input = new BufferedInputStream(new FileInputStream(source));
+             OutputStream output = new BufferedOutputStream(new FileOutputStream(destination))) {
+            byte[] buffer = new byte[BUFFER_SIZE];
+            int count;
+            while ((count = input.read(buffer)) != -1) {
+                output.write(buffer, 0, count);
+            }
+        }
+    }
+
+    private static String sha256(InputStream source) throws Exception {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        try (FileInputStream input = new FileInputStream(file)) {
+        try (InputStream input = source) {
             byte[] buffer = new byte[BUFFER_SIZE];
             int count;
             while ((count = input.read(buffer)) != -1) {
@@ -643,16 +756,101 @@ public final class ApkDownloadController {
         }
     }
 
+    @TargetApi(29)
+    private static final class Api29Downloads {
+        static Uri find(ContentResolver resolver, String fileName) {
+            String[] projection = {MediaStore.Downloads._ID};
+            String selection = MediaStore.Downloads.DISPLAY_NAME + "=? AND "
+                    + MediaStore.Downloads.RELATIVE_PATH + "=?";
+            try (Cursor cursor = resolver.query(
+                    MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                    projection,
+                    selection,
+                    new String[]{fileName, Environment.DIRECTORY_DOWNLOADS + "/"},
+                    MediaStore.Downloads.DATE_ADDED + " DESC")) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    return ContentUris.withAppendedId(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI, cursor.getLong(0));
+                }
+            }
+            return null;
+        }
+
+        static Uri publish(ContentResolver resolver, File source, String fileName)
+                throws IOException {
+            ContentValues values = new ContentValues();
+            values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+            values.put(MediaStore.Downloads.MIME_TYPE,
+                    "application/vnd.android.package-archive");
+            values.put(MediaStore.Downloads.RELATIVE_PATH,
+                    Environment.DIRECTORY_DOWNLOADS + "/");
+            values.put(MediaStore.Downloads.IS_PENDING, 1);
+            Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+            if (uri == null) {
+                throw new IOException("cannot create the APK in the system download directory");
+            }
+            try (InputStream input = new BufferedInputStream(new FileInputStream(source));
+                 OutputStream output = resolver.openOutputStream(uri, "w")) {
+                if (output == null) {
+                    throw new IOException("cannot write the APK to the system download directory");
+                }
+                byte[] buffer = new byte[BUFFER_SIZE];
+                int count;
+                while ((count = input.read(buffer)) != -1) {
+                    output.write(buffer, 0, count);
+                }
+            } catch (IOException error) {
+                resolver.delete(uri, null, null);
+                throw error;
+            }
+            ContentValues ready = new ContentValues();
+            ready.put(MediaStore.Downloads.IS_PENDING, 0);
+            resolver.update(uri, ready, null, null);
+            return uri;
+        }
+    }
+
+    public static final class DownloadRecord {
+        public final File file;
+        public final String fileName;
+        public final String sha256;
+        public final String packageName;
+        public final String versionName;
+        public final long versionCode;
+        public final Uri contentUri;
+
+        DownloadRecord(File file,
+                       String fileName,
+                       String sha256,
+                       String packageName,
+                       String versionName,
+                       long versionCode,
+                       Uri contentUri) {
+            this.file = file;
+            this.fileName = fileName;
+            this.sha256 = sha256;
+            this.packageName = packageName;
+            this.versionName = versionName;
+            this.versionCode = versionCode;
+            this.contentUri = contentUri;
+        }
+
+        DownloadRecord withFile(File newFile, Uri newUri) {
+            return new DownloadRecord(newFile, fileName, sha256, packageName,
+                    versionName, versionCode, newUri);
+        }
+    }
+
     public interface Listener {
         void onStarted(String fileName);
 
         void onProgress(int percent);
 
-        void onVerifying();
+        void onVerifying(boolean existing);
 
-        void onReadyToInstall(File apk);
+        void onReady(DownloadRecord record, boolean existing);
 
-        void onChecksumFailed(String detail);
+        void onValidationFailed(String detail, boolean existing);
 
         void onFailed(int reason, String detail);
     }

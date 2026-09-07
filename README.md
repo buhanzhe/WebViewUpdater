@@ -11,7 +11,8 @@
 - 自动读取 GitHub Latest Release 中的 `webview-packages.json`。
 - 根据包名、Android API、进程 ABI、多架构形态和版本号选择最合适的单 APK。
 - 默认依次尝试 `gh-proxy.com` 和 GitHub 直连；也可固定或自定义加速站。
-- 支持 HTTP Range 时使用 4 路分块下载并保存断点，不支持时自动退回单连接；完成 SHA-256 校验后打开系统安装器。
+- 支持 HTTP Range 时由应用启动 4 个并发连接分块加速，不支持时自动退回单连接；合并并校验后把 APK 保存到系统 `Download` 目录。
+- 新下载完成后尝试打开系统安装器；同名安装包已存在或直接安装未完成时，显示可复制的 `adb shell pm install -r` 命令。
 - 手机打开后自动完成检测与匹配，通常只需“下载”和系统“安装”两步。
 - 手机固定竖屏显示；Android TV 固定横屏，并提供 Leanback 启动入口、无触屏声明、清晰的遥控器焦点顺序和焦点缩放反馈。
 
@@ -41,4 +42,4 @@ $env:ANDROID_HOME = 'D:\android\sdk'
 
 WebView 是系统安全组件。这个应用不能绕过 Android 的校验：APK 的包名和签名必须被当前 ROM 接受，版本降级可能被拒绝，部分系统只允许预配置的 provider。Android 10 以后的一些 WebView 构建还依赖 Trichrome Library 或 split APK，首版不会尝试把这些文件伪装成一个可独立安装包。
 
-应用会先直接打开系统 APK 安装器；如果 Android 8.0 及以上系统因“安装未知应用”权限拒绝启动，应用才打开授权页，并在用户返回后再次尝试安装。
+下载由应用内四线程下载器执行，完成后写入系统 `Download` 目录。新下载会打开系统安装器；Android 8.0 及以上未授权时，先打开本应用的“安装未知应用”授权页，返回后自动继续。安装仍被 ROM 拒绝或用户取消时，页面会显示可复制的 ADB 安装命令。

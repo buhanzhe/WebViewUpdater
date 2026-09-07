@@ -6,12 +6,17 @@
     android:clipToPadding="false"
     android:fillViewport="true"
     android:focusable="false"
-    android:padding="@dimen/page_padding">
+    android:scrollbarStyle="insideOverlay"
+    android:scrollbars="vertical">
 
     <com.buhanzhe.webviewupdater.MaxWidthLinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
+        android:layout_marginStart="@dimen/page_padding"
+        android:layout_marginTop="@dimen/page_padding"
+        android:layout_marginEnd="@dimen/page_padding"
+        android:layout_marginBottom="@dimen/page_padding"
         android:gravity="start"
         android:orientation="vertical">
 

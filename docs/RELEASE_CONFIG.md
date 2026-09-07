@@ -26,7 +26,7 @@
 - `multiArch`：该 APK 是否为多架构包。
 - `asset`：相对于 `assetBaseUrl` 的 Release 文件名。
 - `url`：可选的完整下载 URL，优先级高于 `asset`。
-- `sha256`：可选但强烈建议填写。填写后应用会在安装前校验。
+- `sha256`：可选但强烈建议填写。下载完成或发现系统 Download 目录中有同名 APK 时，应用会在安装或显示命令前校验。
 - `enabled`：设为 `false` 可暂时下线该包。
 
 ## 匹配顺序

@@ -13,36 +13,21 @@ import android.provider.OpenableColumns;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
 
-/** Minimal, read-only provider for APKs downloaded into this app's private directories. */
-public final class ApkFileProvider extends ContentProvider {
-    private static final String EXTERNAL = "external";
-    private static final String CACHE = "cache";
-
-    public static Uri getUriForFile(Context context, File file) {
-        try {
-            File canonical = file.getCanonicalFile();
-            File external = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-            String root;
-            if (external != null && isInside(external, canonical)) {
-                root = EXTERNAL;
-            } else {
-                File cache = new File(context.getCacheDir(), "downloads");
-                if (!isInside(cache, canonical)) {
-                    throw new IllegalArgumentException("APK is outside the app download directory");
-                }
-                root = CACHE;
-            }
-            return new Uri.Builder()
-                    .scheme("content")
-                    .authority(context.getPackageName() + ".files")
-                    .appendPath(root)
-                    .appendPath(canonical.getName())
-                    .build();
-        } catch (IOException error) {
-            throw new IllegalArgumentException("Cannot resolve APK path", error);
+/** Read-only content URI bridge for APKs published to Downloads on Android 5–9. */
+public final class PublicDownloadProvider extends ContentProvider {
+    public static Uri getUriForFile(Context context, File file) throws IOException {
+        File canonical = file.getCanonicalFile();
+        File downloads = Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS).getCanonicalFile();
+        if (!canonical.getParentFile().equals(downloads)) {
+            throw new IOException("APK is outside the system download directory");
         }
+        return new Uri.Builder()
+                .scheme("content")
+                .authority(context.getPackageName() + ".downloads")
+                .appendPath(canonical.getName())
+                .build();
     }
 
     @Override
@@ -108,35 +93,19 @@ public final class ApkFileProvider extends ContentProvider {
     }
 
     private File resolve(Uri uri) throws FileNotFoundException {
-        Context context = getContext();
-        List<String> segments = uri.getPathSegments();
-        if (context == null || segments.size() != 2) {
+        if (uri.getPathSegments().size() != 1) {
             throw new FileNotFoundException("Invalid APK URI");
         }
-        File base;
-        if (EXTERNAL.equals(segments.get(0))) {
-            base = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-        } else if (CACHE.equals(segments.get(0))) {
-            base = new File(context.getCacheDir(), "downloads");
-        } else {
-            throw new FileNotFoundException("Unknown APK root");
-        }
-        if (base == null) {
-            throw new FileNotFoundException("APK root is unavailable");
-        }
         try {
-            File file = new File(base, segments.get(1)).getCanonicalFile();
-            if (!isInside(base, file) || !file.isFile()) {
+            File downloads = Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_DOWNLOADS).getCanonicalFile();
+            File file = new File(downloads, uri.getLastPathSegment()).getCanonicalFile();
+            if (!downloads.equals(file.getParentFile()) || !file.isFile()) {
                 throw new FileNotFoundException("APK does not exist");
             }
             return file;
         } catch (IOException error) {
             throw new FileNotFoundException(error.getMessage());
         }
-    }
-
-    private static boolean isInside(File base, File child) throws IOException {
-        String basePath = base.getCanonicalPath() + File.separator;
-        return child.getCanonicalPath().startsWith(basePath);
     }
 }
