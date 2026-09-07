@@ -34,6 +34,7 @@
     <string name="config_source">Configuration source: %1$s</string>
     <string name="matched_version">%1$s (%2$s)</string>
     <string name="matched_detail">Package: %1$s\nABIs: %2$s\nAndroid: %3$s\nFile: %4$s\nSaved in: Downloads</string>
+    <string name="high_android_fallback">This Android version is newer than the catalog range. The highest matching build was selected.</string>
     <string name="storage_permission_required">Storage permission is required to write to Downloads</string>
     <string name="download_started">Starting segmented download: %1$s</string>
     <string name="download_progress">Downloading with four connections: %1$d%%</string>

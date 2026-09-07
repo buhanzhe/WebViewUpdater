@@ -34,6 +34,7 @@
     <string name="config_source">配置来源：%1$s</string>
     <string name="matched_version">%1$s（%2$s）</string>
     <string name="matched_detail">包名：%1$s\n架构：%2$s\n适用 Android：%3$s\n文件：%4$s\n保存位置：下载目录</string>
+    <string name="high_android_fallback">当前 Android 高于配置范围，已选择架构匹配的最高版本</string>
     <string name="storage_permission_required">需要存储权限才能写入下载目录</string>
     <string name="download_started">正在启动分块下载：%1$s</string>
     <string name="download_progress">四线程下载中：%1$d%%</string>

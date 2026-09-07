@@ -38,6 +38,8 @@
 3. 当前安装包的单架构/多架构形态；
 4. 更高的 `versionCode`。
 
+如果设备 Android API 高于同一 provider 的整个配置范围，应用会忽略 `maxSdk`，在仍满足 `minSdk`、包名和 ABI 的条目中先选最高 `versionName`，再按上述架构规则选择具体变体。这个兜底只对高于目录上限的 Android 生效，不会在已配置的 SDK 范围内用旧包替代缺失的 ABI 变体。
+
 配置中不要把不同签名、不同包名的 APK 当作可互换版本。Chrome/WebView 的现代版本还可能依赖 Trichrome Library 或 split APK；首个最小版本只处理单个、可独立安装的 APK。
 
 可从 [`release/webview-packages.example.json`](../release/webview-packages.example.json) 复制条目。替换占位值、填写 SHA-256，再把 `enabled` 改为 `true`。

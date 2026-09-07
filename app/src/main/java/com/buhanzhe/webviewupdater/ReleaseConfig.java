@@ -70,6 +70,48 @@ public final class ReleaseConfig {
                 bestScore = score;
             }
         }
+        if (best != null) {
+            return best;
+        }
+        return findHighSdkFallback(deviceInfo);
+    }
+
+    private WebViewPackage findHighSdkFallback(DeviceInfo deviceInfo) {
+        int catalogMaxSdk = Integer.MIN_VALUE;
+        String currentPackage = deviceInfo.webViewPackageName();
+        for (WebViewPackage candidate : packages) {
+            if (!candidate.enabled || deviceInfo.sdkInt < candidate.minSdk
+                    || !candidate.matchesProvider(currentPackage)) {
+                continue;
+            }
+            catalogMaxSdk = Math.max(catalogMaxSdk, candidate.maxSdk);
+        }
+
+        // Only relax maxSdk when this Android version is newer than the entire
+        // catalog. Missing ABI variants inside a configured SDK range must not
+        // silently fall back to an older Android build.
+        if (catalogMaxSdk == Integer.MIN_VALUE || deviceInfo.sdkInt <= catalogMaxSdk) {
+            return null;
+        }
+
+        WebViewPackage best = null;
+        int bestScore = Integer.MIN_VALUE;
+        for (WebViewPackage candidate : packages) {
+            int score = candidate.matchScoreIgnoringMaxSdk(deviceInfo);
+            if (score < 0) {
+                continue;
+            }
+            int versionComparison = best == null
+                    ? 1
+                    : compareVersionNames(candidate.versionName, best.versionName);
+            if (versionComparison > 0
+                    || (versionComparison == 0 && score > bestScore)
+                    || (versionComparison == 0 && score == bestScore
+                    && candidate.versionCode > best.versionCode)) {
+                best = candidate;
+                bestScore = score;
+            }
+        }
         return best;
     }
 
@@ -292,7 +334,16 @@ public final class ReleaseConfig {
         }
 
         int matchScore(DeviceInfo device) {
-            if (!enabled || device.sdkInt < minSdk || device.sdkInt > maxSdk) {
+            return matchScore(device, false);
+        }
+
+        int matchScoreIgnoringMaxSdk(DeviceInfo device) {
+            return matchScore(device, true);
+        }
+
+        private int matchScore(DeviceInfo device, boolean ignoreMaxSdk) {
+            if (!enabled || device.sdkInt < minSdk
+                    || (!ignoreMaxSdk && device.sdkInt > maxSdk)) {
                 return -1;
             }
 
@@ -328,6 +379,10 @@ public final class ReleaseConfig {
                 score += 20;
             }
             return score;
+        }
+
+        private boolean matchesProvider(String currentPackage) {
+            return packageName.equals(currentPackage) || "*".equals(packageName);
         }
 
         private int firstAbiMatch(List<String> deviceAbis) {

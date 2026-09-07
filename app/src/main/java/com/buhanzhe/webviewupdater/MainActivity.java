@@ -276,7 +276,8 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
                 selectedPackage.versionName,
                 selectedPackage.channel));
         matchTitleText.setTextColor(getColorCompat(R.color.success));
-        String sdkRange = selectedPackage.maxSdk == Integer.MAX_VALUE
+        boolean highSdkFallback = deviceInfo.sdkInt > selectedPackage.maxSdk;
+        String sdkRange = selectedPackage.maxSdk == Integer.MAX_VALUE || highSdkFallback
                 ? selectedPackage.minSdk + "+"
                 : selectedPackage.minSdk + "–" + selectedPackage.maxSdk;
         boolean alreadyDownloaded = downloadController.hasExisting(selectedPackage);
@@ -286,6 +287,9 @@ public final class MainActivity extends Activity implements ApkDownloadControlle
                 selectedPackage.abis.isEmpty() ? "universal" : TextUtils.join(", ", selectedPackage.abis),
                 sdkRange,
                 selectedPackage.fileName());
+        if (highSdkFallback) {
+            detail += "\n" + getString(R.string.high_android_fallback);
+        }
         if (alreadyDownloaded) {
             detail += "\n" + getString(R.string.apk_ready_to_install);
         }
